@@ -18,6 +18,8 @@ import { FaPlus, FaUpload, FaEdit, FaTrash, FaTimes } from 'react-icons/fa';
 import axios from 'axios';
 import { API_BASE_URL } from '../config/constants';
 
+const AVAILABLE_SUBJECTS = ['Math', 'English', 'Hindi', 'Science', 'Geography'];
+
 interface Teacher {
   id: number;
   name: string;
@@ -41,7 +43,7 @@ const TeacherManagement: React.FC = () => {
     name: '',
     email: '',
     phone: '',
-    subjects: '',
+    subjects: [] as string[],
     classes: '',
     isClassTeacher: false,
     classTeacherFor: '',
@@ -67,7 +69,7 @@ const TeacherManagement: React.FC = () => {
     try {
       const teacherData = {
         ...formData,
-        subjects: formData.subjects.split(',').map(s => s.trim()).filter(s => s),
+        subjects: formData.subjects,
         classes: formData.classes.split(',').map(c => c.trim()).filter(c => c),
       };
 
@@ -101,7 +103,7 @@ const TeacherManagement: React.FC = () => {
       name: teacher.name,
       email: teacher.email,
       phone: teacher.phone,
-      subjects: teacher.subjects.join(', '),
+      subjects: teacher.subjects,
       classes: teacher.classes.join(', '),
       isClassTeacher: teacher.isClassTeacher,
       classTeacherFor: teacher.classTeacherFor || '',
@@ -114,7 +116,7 @@ const TeacherManagement: React.FC = () => {
       name: '',
       email: '',
       phone: '',
-      subjects: '',
+      subjects: [],
       classes: '',
       isClassTeacher: false,
       classTeacherFor: '',
@@ -123,6 +125,7 @@ const TeacherManagement: React.FC = () => {
     setShowAddForm(false);
     setShowUploadForm(false);
   };
+
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -228,12 +231,61 @@ const TeacherManagement: React.FC = () => {
                   />
                 </Box>
                 <Box flex={1}>
-                  <Text mb={2} fontWeight="medium">Subjects (comma-separated)</Text>
-                  <Input
-                    value={formData.subjects}
-                    onChange={(e) => setFormData({ ...formData, subjects: e.target.value })}
-                    placeholder="Math, Science, English"
-                  />
+                  <Text mb={2} fontWeight="medium">Subjects</Text>
+                  <VStack align="start" gap={2}>
+                    <select
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '6px',
+                        backgroundColor: 'white',
+                        fontSize: '14px'
+                      }}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                        const selectedSubject = e.target.value;
+                        if (selectedSubject && !formData.subjects.includes(selectedSubject)) {
+                          setFormData({ ...formData, subjects: [...formData.subjects, selectedSubject] });
+                        }
+                        e.target.value = ''; // Reset dropdown
+                      }}
+                    >
+                      <option value="">Select a subject to add</option>
+                      {AVAILABLE_SUBJECTS.filter(subject => !formData.subjects.includes(subject)).map((subject) => (
+                        <option key={subject} value={subject}>
+                          {subject}
+                        </option>
+                      ))}
+                    </select>
+                    
+                    {/* Display selected subjects */}
+                    {formData.subjects.length > 0 && (
+                      <Box w="100%">
+                        <Text fontSize="sm" color="gray.600" mb={2}>Selected Subjects:</Text>
+                        <HStack flexWrap="wrap" gap={2}>
+                          {formData.subjects.map((subject) => (
+                            <Badge
+                              key={subject}
+                              colorScheme="blue"
+                              variant="solid"
+                              px={2}
+                              py={1}
+                              cursor="pointer"
+                              onClick={() => setFormData({ 
+                                ...formData, 
+                                subjects: formData.subjects.filter(s => s !== subject) 
+                              })}
+                            >
+                              {subject} ×
+                            </Badge>
+                          ))}
+                        </HStack>
+                        <Text fontSize="xs" color="gray.500" mt={1}>
+                          Click on a subject to remove it
+                        </Text>
+                      </Box>
+                    )}
+                  </VStack>
                 </Box>
               </HStack>
 
