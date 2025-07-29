@@ -22,8 +22,8 @@ interface Activity {
   classId: number;
   teacherId: number;
   domainId: number;
-  competencyId: number;
-  learningOutcomes: string;
+  competencyIds: number[];
+  learningOutcomes: string[];
   rubric: {
     awareness: { stream: string; mountain: string; sky: string };
     sensitivity: { stream: string; mountain: string; sky: string };
@@ -31,7 +31,7 @@ interface Activity {
   };
   createdAt: string;
   domain?: { id: number; name: string; description: string };
-  competency?: { id: number; name: string; description: string };
+  competencies?: { id: number; name: string; description: string }[];
 }
 
 interface Feedback {
@@ -194,7 +194,11 @@ const StudentTimeline: React.FC<StudentTimelineProps> = ({
 
   const getItemPreview = (item: TimelineItem) => {
     if (isActivity(item)) {
-      return item.learningOutcomes;
+      if (item.learningOutcomes && item.learningOutcomes.length > 0) {
+        return item.learningOutcomes.slice(0, 2).join('; ') + 
+               (item.learningOutcomes.length > 2 ? '...' : '');
+      }
+      return 'No learning outcomes specified';
     } else if (isFeedback(item)) {
       return item.content;
     } else if (isObservation(item)) {
@@ -360,9 +364,19 @@ const StudentTimeline: React.FC<StudentTimelineProps> = ({
                                 <Badge colorScheme="blue" size="sm">
                                   {item.domain?.name || 'Unknown Domain'}
                                 </Badge>
-                                <Badge colorScheme="purple" size="sm">
-                                  {item.competency?.name || 'Unknown Competency'}
-                                </Badge>
+                                <HStack gap={1} flexWrap="wrap">
+                                  {item.competencies && item.competencies.length > 0 ? (
+                                    item.competencies.map(comp => (
+                                      <Badge key={comp.id} colorScheme="purple" size="sm">
+                                        {comp.name}
+                                      </Badge>
+                                    ))
+                                  ) : (
+                                    <Badge colorScheme="gray" size="sm">
+                                      No competencies
+                                    </Badge>
+                                  )}
+                                </HStack>
                               </>
                             )}
                             {isFeedback(item) && (
@@ -472,17 +486,50 @@ const StudentTimeline: React.FC<StudentTimelineProps> = ({
               {isActivity(selectedItem) && (
                 <VStack gap={4} align="stretch">
                   <Box>
-                    <Text fontWeight="medium" mb={2}>Learning Outcomes</Text>
-                    <Box bg="gray.50" p={4} borderRadius="md">
-                      <Text fontSize="sm">{selectedItem.learningOutcomes}</Text>
-                    </Box>
+                    <Text fontWeight="medium" mb={2}>
+                      Learning Outcomes ({selectedItem.learningOutcomes?.length || 0})
+                    </Text>
+                    <VStack gap={2} align="stretch">
+                      {selectedItem.learningOutcomes && selectedItem.learningOutcomes.length > 0 ? (
+                        selectedItem.learningOutcomes.map((outcome, index) => (
+                          <Box key={index} bg="green.50" p={3} borderRadius="md" border="1px solid" borderColor="green.200">
+                            <Text fontSize="sm" color="green.800">
+                              {outcome}
+                            </Text>
+                          </Box>
+                        ))
+                      ) : (
+                        <Box bg="gray.50" p={4} borderRadius="md">
+                          <Text fontSize="sm" color="gray.500" textAlign="center" fontStyle="italic">
+                            No learning outcomes specified for this activity
+                          </Text>
+                        </Box>
+                      )}
+                    </VStack>
                   </Box>
                   <Box>
-                    <Text fontWeight="medium" mb={2}>Domain & Competency</Text>
-                    <HStack gap={4}>
-                      <Badge colorScheme="blue">{selectedItem.domain?.name}</Badge>
-                      <Badge colorScheme="purple">{selectedItem.competency?.name}</Badge>
-                    </HStack>
+                    <Text fontWeight="medium" mb={2}>Domain & Competencies</Text>
+                    <VStack gap={2} align="start">
+                      <Badge colorScheme="blue">{selectedItem.domain?.name || 'Unknown Domain'}</Badge>
+                      <Box>
+                        <Text fontSize="xs" fontWeight="medium" mb={1}>
+                          Competencies ({selectedItem.competencies?.length || 0}):
+                        </Text>
+                        <HStack gap={1} flexWrap="wrap">
+                          {selectedItem.competencies && selectedItem.competencies.length > 0 ? (
+                            selectedItem.competencies.map(comp => (
+                              <Badge key={comp.id} colorScheme="purple">
+                                {comp.name}
+                              </Badge>
+                            ))
+                          ) : (
+                            <Badge colorScheme="gray">
+                              No competencies specified
+                            </Badge>
+                          )}
+                        </HStack>
+                      </Box>
+                    </VStack>
                   </Box>
                 </VStack>
               )}

@@ -21,8 +21,8 @@ interface Activity {
   classId: number;
   teacherId: number;
   domainId: number;
-  competencyId: number;
-  learningOutcomes: string;
+  competencyIds: number[];
+  learningOutcomes: string[];
   rubric: {
     awareness: { stream: string; mountain: string; sky: string };
     sensitivity: { stream: string; mountain: string; sky: string };
@@ -30,7 +30,7 @@ interface Activity {
   };
   createdAt: string;
   domain?: { id: number; name: string; description: string };
-  competency?: { id: number; name: string; description: string };
+  competencies?: { id: number; name: string; description: string }[];
 }
 
 
@@ -150,14 +150,24 @@ const ClassActivityFeed: React.FC<ClassActivityFeedProps> = ({
                           <Heading size="sm" color="blue.700">
                             {activity.title}
                           </Heading>
-                          <HStack gap={2}>
+                          <VStack align="start" gap={1}>
                             <Badge colorScheme="blue" size="sm">
                               {activity.domain?.name || 'Unknown Domain'}
                             </Badge>
-                            <Badge colorScheme="purple" size="sm">
-                              {activity.competency?.name || 'Unknown Competency'}
-                            </Badge>
-                          </HStack>
+                            <HStack gap={1} flexWrap="wrap">
+                              {activity.competencies && activity.competencies.length > 0 ? (
+                                activity.competencies.map(comp => (
+                                  <Badge key={comp.id} colorScheme="purple" size="sm">
+                                    {comp.name}
+                                  </Badge>
+                                ))
+                              ) : (
+                                <Badge colorScheme="gray" size="sm">
+                                  No competencies
+                                </Badge>
+                              )}
+                            </HStack>
+                          </VStack>
                         </VStack>
                         <VStack gap={2}>
                           <Button
@@ -181,9 +191,21 @@ const ClassActivityFeed: React.FC<ClassActivityFeedProps> = ({
                         </VStack>
                       </HStack>
 
-                      <Text fontSize="sm" color="gray.600" mb={3} lineClamp={2}>
-                        {activity.learningOutcomes}
-                      </Text>
+                      <Box mb={3}>
+                        <Text fontSize="xs" fontWeight="medium" color="gray.700" mb={1}>
+                          Learning Outcomes ({activity.learningOutcomes?.length || 0}):
+                        </Text>
+                        {activity.learningOutcomes && activity.learningOutcomes.length > 0 ? (
+                          <Text fontSize="sm" color="gray.600" lineClamp={2}>
+                            {activity.learningOutcomes.slice(0, 2).join('; ')}
+                            {activity.learningOutcomes.length > 2 && '...'}
+                          </Text>
+                        ) : (
+                          <Text fontSize="sm" color="gray.400" fontStyle="italic">
+                            No learning outcomes specified
+                          </Text>
+                        )}
+                      </Box>
 
                       <HStack justify="space-between" align="center">
                         <HStack gap={2} fontSize="xs" color="gray.400">
@@ -228,14 +250,24 @@ const ClassActivityFeed: React.FC<ClassActivityFeedProps> = ({
               <Flex align="center">
                 <VStack align="start" gap={1}>
                   <Heading size="md">{selectedActivity.title}</Heading>
-                  <HStack gap={2}>
+                  <VStack align="start" gap={2}>
                     <Badge colorScheme="blue">
                       {selectedActivity.domain?.name}
                     </Badge>
-                    <Badge colorScheme="purple">
-                      {selectedActivity.competency?.name}
-                    </Badge>
-                  </HStack>
+                    <HStack gap={1} flexWrap="wrap">
+                      {selectedActivity.competencies && selectedActivity.competencies.length > 0 ? (
+                        selectedActivity.competencies.map(comp => (
+                          <Badge key={comp.id} colorScheme="purple">
+                            {comp.name}
+                          </Badge>
+                        ))
+                      ) : (
+                        <Badge colorScheme="gray">
+                          No competencies specified
+                        </Badge>
+                      )}
+                    </HStack>
+                  </VStack>
                 </VStack>
                 <Spacer />
                 <Button
@@ -252,10 +284,26 @@ const ClassActivityFeed: React.FC<ClassActivityFeedProps> = ({
               <VStack gap={6} align="stretch">
                 {/* Learning Outcomes */}
                 <Box>
-                  <Text fontWeight="medium" mb={2}>Learning Outcomes</Text>
-                  <Box bg="gray.50" p={4} borderRadius="md">
-                    <Text fontSize="sm">{selectedActivity.learningOutcomes}</Text>
-                  </Box>
+                  <Text fontWeight="medium" mb={2}>
+                    Learning Outcomes ({selectedActivity.learningOutcomes?.length || 0})
+                  </Text>
+                  <VStack gap={2} align="stretch">
+                    {selectedActivity.learningOutcomes && selectedActivity.learningOutcomes.length > 0 ? (
+                      selectedActivity.learningOutcomes.map((outcome, index) => (
+                        <Box key={index} bg="green.50" p={3} borderRadius="md" border="1px solid" borderColor="green.200">
+                          <Text fontSize="sm" color="green.800">
+                            {outcome}
+                          </Text>
+                        </Box>
+                      ))
+                    ) : (
+                      <Box bg="gray.50" p={4} borderRadius="md">
+                        <Text fontSize="sm" color="gray.500" textAlign="center" fontStyle="italic">
+                          No learning outcomes specified for this activity
+                        </Text>
+                      </Box>
+                    )}
+                  </VStack>
                 </Box>
 
                 {/* Rubric */}

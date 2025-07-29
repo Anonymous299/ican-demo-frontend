@@ -30,6 +30,12 @@ interface Competency {
   description: string;
 }
 
+interface LearningOutcome {
+  id: number;
+  domain: string;
+  outcomes: string[];
+}
+
 interface Class {
   id: number;
   name: string;
@@ -64,13 +70,14 @@ const ActivityCreationForm: React.FC<ActivityCreationFormProps> = ({
 }) => {
   const [domains, setDomains] = useState<Domain[]>([]);
   const [competencies, setCompetencies] = useState<Competency[]>([]);
+  const [learningOutcomes, setLearningOutcomes] = useState<LearningOutcome[]>([]);
   const [loading, setLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     domainId: '',
-    competencyId: '',
-    learningOutcomes: '',
+    competencyIds: [] as string[],
+    selectedLearningOutcomes: [] as string[],
   });
   const [rubric, setRubric] = useState<Rubric>({
     awareness: { stream: '', mountain: '', sky: '' },
@@ -81,6 +88,7 @@ const ActivityCreationForm: React.FC<ActivityCreationFormProps> = ({
   useEffect(() => {
     fetchDomains();
     fetchCompetencies();
+    fetchLearningOutcomes();
   }, []);
 
   const fetchDomains = async () => {
@@ -101,6 +109,15 @@ const ActivityCreationForm: React.FC<ActivityCreationFormProps> = ({
     }
   };
 
+  const fetchLearningOutcomes = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/learning-outcomes`);
+      setLearningOutcomes(response.data);
+    } catch (error) {
+      console.error('Error fetching learning outcomes:', error);
+    }
+  };
+
   const handleRubricChange = (
     dimension: keyof Rubric,
     level: keyof RubricCell,
@@ -117,6 +134,18 @@ const ActivityCreationForm: React.FC<ActivityCreationFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validation
+    if (formData.competencyIds.length === 0) {
+      alert('Please select at least one competency for this activity.');
+      return;
+    }
+    
+    if (formData.selectedLearningOutcomes.length === 0) {
+      alert('Please select at least one learning outcome for this activity.');
+      return;
+    }
+    
     setShowPreview(true);
   };
 
@@ -128,8 +157,8 @@ const ActivityCreationForm: React.FC<ActivityCreationFormProps> = ({
         classId: selectedClass.id,
         title: formData.title,
         domainId: formData.domainId,
-        competencyId: formData.competencyId,
-        learningOutcomes: formData.learningOutcomes,
+        competencyIds: formData.competencyIds.map(id => parseInt(id)),
+        learningOutcomes: formData.selectedLearningOutcomes,
         rubric
       };
 
@@ -150,7 +179,14 @@ const ActivityCreationForm: React.FC<ActivityCreationFormProps> = ({
   };
 
   const selectedDomain = domains.find(d => d.id === parseInt(formData.domainId));
-  const selectedCompetency = competencies.find(c => c.id === parseInt(formData.competencyId));
+  const selectedCompetencies = competencies.filter(c => 
+    formData.competencyIds.includes(c.id.toString())
+  );
+  
+  // Filter learning outcomes based on selected domain
+  const availableOutcomes = selectedDomain 
+    ? learningOutcomes.find(lo => lo.domain === selectedDomain.name)?.outcomes || []
+    : [];
 
   // Preview Component
   if (showPreview) {
@@ -187,25 +223,49 @@ const ActivityCreationForm: React.FC<ActivityCreationFormProps> = ({
                   <strong>Class:</strong> {selectedClass.name} ({selectedClass.currentEnrollment} students)
                 </Text>
                 
-                <HStack gap={4}>
+                <VStack align="start" gap={2}>
                   <Badge colorScheme="blue" size="sm">
                     <strong>Domain:</strong> {selectedDomain?.name}
                   </Badge>
-                  <Badge colorScheme="purple" size="sm">
-                    <strong>Competency:</strong> {selectedCompetency?.name}
-                  </Badge>
-                </HStack>
+                  {selectedCompetencies.length > 0 && (
+                    <Box>
+                      <Text fontSize="xs" fontWeight="medium" mb={1}>
+                        Competencies ({selectedCompetencies.length}):
+                      </Text>
+                      <HStack gap={1} flexWrap="wrap">
+                        {selectedCompetencies.map(comp => (
+                          <Badge key={comp.id} colorScheme="purple" size="sm">
+                            {comp.name}
+                          </Badge>
+                        ))}
+                      </HStack>
+                    </Box>
+                  )}
+                </VStack>
               </VStack>
             </Box>
 
             {/* Learning Outcomes Preview */}
             <Box>
-              <Text mb={3} fontWeight="medium" fontSize="lg">Learning Outcomes</Text>
-              <Box bg="gray.50" p={4} borderRadius="md" border="1px solid" borderColor="gray.200">
-                <Text fontSize="sm" whiteSpace="pre-wrap">
-                  {formData.learningOutcomes}
-                </Text>
-              </Box>
+              <Text mb={3} fontWeight="medium" fontSize="lg">
+                Learning Outcomes ({formData.selectedLearningOutcomes.length})
+              </Text>
+              <VStack gap={2} align="stretch">
+                {formData.selectedLearningOutcomes.map((outcome, index) => (
+                  <Box key={index} bg="green.50" p={3} borderRadius="md" border="1px solid" borderColor="green.200">
+                    <Text fontSize="sm" color="green.800">
+                      {outcome}
+                    </Text>
+                  </Box>
+                ))}
+                {formData.selectedLearningOutcomes.length === 0 && (
+                  <Box bg="gray.50" p={4} borderRadius="md" border="1px solid" borderColor="gray.200">
+                    <Text fontSize="sm" color="gray.500" textAlign="center">
+                      No learning outcomes selected
+                    </Text>
+                  </Box>
+                )}
+              </VStack>
             </Box>
 
             {/* Rubric Preview */}
@@ -334,7 +394,12 @@ const ActivityCreationForm: React.FC<ActivityCreationFormProps> = ({
                 <Text mb={2} fontWeight="medium">Select Domain</Text>
                 <select
                   value={formData.domainId}
-                  onChange={(e) => setFormData({ ...formData, domainId: e.target.value })}
+                  onChange={(e) => setFormData({ 
+                    ...formData, 
+                    domainId: e.target.value,
+                    selectedLearningOutcomes: [], // Clear learning outcomes when domain changes
+                    competencyIds: [] // Clear competencies when domain changes
+                  })}
                   style={{
                     width: '100%',
                     padding: '8px 12px',
@@ -359,30 +424,68 @@ const ActivityCreationForm: React.FC<ActivityCreationFormProps> = ({
               </Box>
 
               <Box flex={1}>
-                <Text mb={2} fontWeight="medium">Select Competency</Text>
-                <select
-                  value={formData.competencyId}
-                  onChange={(e) => setFormData({ ...formData, competencyId: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: '6px',
-                    border: '1px solid #e2e8f0',
-                    fontSize: '14px',
-                  }}
-                  required
-                >
-                  <option value="">Choose a competency</option>
-                  {competencies.map(competency => (
-                    <option key={competency.id} value={competency.id}>
-                      {competency.name}
-                    </option>
-                  ))}
-                </select>
-                {selectedCompetency && (
-                  <Text fontSize="sm" color="gray.600" mt={1}>
-                    {selectedCompetency.description}
-                  </Text>
+                <Text mb={2} fontWeight="medium">Select Competencies</Text>
+                <Box border="1px solid" borderColor="gray.200" borderRadius="md" p={3} bg="gray.50">
+                  <VStack gap={2} align="stretch">
+                    {competencies.map(competency => (
+                      <Box
+                        key={competency.id}
+                        p={2}
+                        bg="white"
+                        borderRadius="md"
+                        border="1px solid"
+                        borderColor={formData.competencyIds.includes(competency.id.toString()) ? 'blue.300' : 'gray.200'}
+                        _hover={{ borderColor: 'blue.200' }}
+                        cursor="pointer"
+                        onClick={() => {
+                          const competencyId = competency.id.toString();
+                          const isSelected = formData.competencyIds.includes(competencyId);
+                          setFormData({
+                            ...formData,
+                            competencyIds: isSelected 
+                              ? formData.competencyIds.filter(id => id !== competencyId)
+                              : [...formData.competencyIds, competencyId]
+                          });
+                        }}
+                      >
+                        <HStack>
+                          <input
+                            type="checkbox"
+                            checked={formData.competencyIds.includes(competency.id.toString())}
+                            onChange={() => {}} // Handled by onClick above
+                            style={{ marginRight: '8px' }}
+                          />
+                          <VStack align="start" gap={1} flex={1}>
+                            <Text fontSize="sm" fontWeight="medium">
+                              {competency.name}
+                            </Text>
+                            <Text fontSize="xs" color="gray.600">
+                              {competency.description}
+                            </Text>
+                          </VStack>
+                        </HStack>
+                      </Box>
+                    ))}
+                  </VStack>
+                  {formData.competencyIds.length === 0 && (
+                    <Text fontSize="sm" color="gray.500" textAlign="center" py={2}>
+                      Select one or more competencies for this activity
+                    </Text>
+                  )}
+                </Box>
+                {selectedCompetencies.length > 0 && (
+                  <Box mt={2}>
+                    <Text fontSize="sm" fontWeight="medium" color="blue.700" mb={1}>
+                      Selected ({selectedCompetencies.length}):
+                    </Text>
+                    <HStack gap={1} flexWrap="wrap">
+                      {selectedCompetencies.map(comp => (
+                        <Badge key={comp.id} colorScheme="blue" size="sm">
+                          {comp.name}
+                        </Badge>
+                      ))}
+                    </HStack>
+                  </Box>
                 )}
               </Box>
             </HStack>
@@ -390,13 +493,79 @@ const ActivityCreationForm: React.FC<ActivityCreationFormProps> = ({
             {/* Learning Outcomes */}
             <Box>
               <Text mb={2} fontWeight="medium">Learning Outcomes</Text>
-              <Textarea
-                value={formData.learningOutcomes}
-                onChange={(e) => setFormData({ ...formData, learningOutcomes: e.target.value })}
-                placeholder="Describe the expected learning outcomes for this activity..."
-                rows={4}
-                required
-              />
+              {!selectedDomain ? (
+                <Box p={4} bg="orange.50" borderRadius="md" border="1px solid" borderColor="orange.200">
+                  <Text fontSize="sm" color="orange.600" textAlign="center">
+                    Please select a domain first to see available learning outcomes
+                  </Text>
+                </Box>
+              ) : availableOutcomes.length === 0 ? (
+                <Box p={4} bg="gray.50" borderRadius="md" border="1px solid" borderColor="gray.200">
+                  <Text fontSize="sm" color="gray.500" textAlign="center">
+                    No learning outcomes available for {selectedDomain.name}
+                  </Text>
+                </Box>
+              ) : (
+                <Box border="1px solid" borderColor="gray.200" borderRadius="md" p={3} bg="gray.50">
+                  <VStack gap={2} align="stretch">
+                    {availableOutcomes.map((outcome, index) => (
+                      <Box
+                        key={index}
+                        p={3}
+                        bg="white"
+                        borderRadius="md"
+                        border="1px solid"
+                        borderColor={formData.selectedLearningOutcomes.includes(outcome) ? 'green.300' : 'gray.200'}
+                        _hover={{ borderColor: 'green.200' }}
+                        cursor="pointer"
+                        onClick={() => {
+                          const isSelected = formData.selectedLearningOutcomes.includes(outcome);
+                          setFormData({
+                            ...formData,
+                            selectedLearningOutcomes: isSelected 
+                              ? formData.selectedLearningOutcomes.filter(lo => lo !== outcome)
+                              : [...formData.selectedLearningOutcomes, outcome]
+                          });
+                        }}
+                      >
+                        <HStack align="start">
+                          <input
+                            type="checkbox"
+                            checked={formData.selectedLearningOutcomes.includes(outcome)}
+                            onChange={() => {}} // Handled by onClick above
+                            style={{ marginTop: '2px', marginRight: '8px' }}
+                          />
+                          <Text fontSize="sm" flex={1}>
+                            {outcome}
+                          </Text>
+                        </HStack>
+                      </Box>
+                    ))}
+                  </VStack>
+                  {formData.selectedLearningOutcomes.length === 0 && (
+                    <Text fontSize="sm" color="gray.500" textAlign="center" py={2}>
+                      Select one or more learning outcomes for this activity
+                    </Text>
+                  )}
+                </Box>
+              )}
+              
+              {formData.selectedLearningOutcomes.length > 0 && (
+                <Box mt={2}>
+                  <Text fontSize="sm" fontWeight="medium" color="green.700" mb={2}>
+                    Selected Learning Outcomes ({formData.selectedLearningOutcomes.length}):
+                  </Text>
+                  <VStack gap={2} align="stretch">
+                    {formData.selectedLearningOutcomes.map((outcome, index) => (
+                      <Box key={index} p={2} bg="green.50" borderRadius="md" border="1px solid" borderColor="green.200">
+                        <Text fontSize="sm" color="green.800">
+                          {outcome}
+                        </Text>
+                      </Box>
+                    ))}
+                  </VStack>
+                </Box>
+              )}
             </Box>
 
             {/* Rubric Section */}
