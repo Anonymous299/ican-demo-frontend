@@ -7,6 +7,7 @@ import {
   VStack,
   Text,
   Heading,
+  Image,
 } from '@chakra-ui/react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -61,6 +62,12 @@ const Login: React.FC = () => {
         bg="white"
       >
         <VStack gap={6}>
+          <Image 
+            src="/logo.jpeg" 
+            alt="e-Vriddhi Logo" 
+            boxSize="80px"
+            objectFit="contain"
+          />
           <Heading size="lg" color="blue.600">
             e-Vriddhi
           </Heading>

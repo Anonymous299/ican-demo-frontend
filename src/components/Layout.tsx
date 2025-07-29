@@ -7,6 +7,8 @@ import {
   Button,
   Text,
   Container,
+  Image,
+  HStack,
 } from '@chakra-ui/react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -22,9 +24,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <Box bg="white" shadow="sm" px={4} py={3}>
         <Container maxW="7xl">
           <Flex align="center">
-            <Heading size="md" color="blue.600">
-              e-Vriddhi
-            </Heading>
+            <HStack gap={3}>
+              <Image 
+                src="/logo.jpeg" 
+                alt="e-Vriddhi Logo" 
+                boxSize="40px"
+                objectFit="contain"
+              />
+              <Heading size="md" color="blue.600">
+                e-Vriddhi
+              </Heading>
+            </HStack>
             
             <Spacer />
             
