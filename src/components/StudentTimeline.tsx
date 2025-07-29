@@ -185,7 +185,7 @@ const StudentTimeline: React.FC<StudentTimelineProps> = ({
     if (isActivity(item)) {
       return item.title;
     } else if (isFeedback(item)) {
-      return `${item.feedbackType.charAt(0).toUpperCase() + item.feedbackType.slice(1)} Feedback`;
+      return `${item.feedbackType?.charAt(0).toUpperCase() + item.feedbackType?.slice(1) || 'Unknown'} Feedback`;
     } else if (isObservation(item)) {
       return 'Teacher Anecdote';
     }

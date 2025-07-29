@@ -12,7 +12,7 @@ import {
   Flex,
   Spacer,
 } from '@chakra-ui/react';
-import { FaUsers, FaClipboardList, FaChartLine, FaComments, FaFileAlt, FaEye, FaImage, FaCheck } from 'react-icons/fa';
+import { FaUsers, FaClipboardList, FaChartLine, FaComments, FaFileAlt, FaEye, FaImage, FaCheck, FaFilePdf, FaUpload, FaTimes } from 'react-icons/fa';
 import axios from 'axios';
 import { API_BASE_URL } from '../config/constants';
 import StudentInteractionForms from './StudentInteractionForms';
@@ -53,10 +53,25 @@ const TeacherDashboard: React.FC = () => {
   const [showTimeline, setShowTimeline] = useState(false);
   const [showPortfolio, setShowPortfolio] = useState(false);
   const [selectedTerm, setSelectedTerm] = useState<'term1' | 'term2'>('term1');
+  const [showPdfUpload, setShowPdfUpload] = useState(false);
+  const [demoPdfStatus, setDemoPdfStatus] = useState({ available: false, size: 0 });
 
   useEffect(() => {
     fetchClasses();
+    checkDemoPdfStatus();
   }, []);
+
+  const checkDemoPdfStatus = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_BASE_URL}/api/demo-pdf-status`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      setDemoPdfStatus(response.data);
+    } catch (error) {
+      console.error('Error checking demo PDF status:', error);
+    }
+  };
 
   useEffect(() => {
     if (selectedClassId) {
@@ -116,11 +131,106 @@ const TeacherDashboard: React.FC = () => {
 
   const selectedClass = classes.find(c => c.id === selectedClassId);
 
+  const handleGenerateHPC = async () => {
+    if (!selectedStudent) {
+      alert('Please select a student first');
+      return;
+    }
+
+    if (!demoPdfStatus.available) {
+      alert('Demo PDF not uploaded yet. Please upload a demo PDF first using the "Upload Demo PDF" button.');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(
+        `${API_BASE_URL}/api/generate-hpc/${selectedStudent.id}/${selectedTerm}`,
+        {
+          headers: { 'Authorization': `Bearer ${token}` },
+          responseType: 'blob'
+        }
+      );
+
+      // Create blob link to download the PDF
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `HPC_${selectedStudent.name}_${selectedTerm.toUpperCase()}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error generating HPC:', error);
+      alert('Error generating HPC. Please try again.');
+    }
+  };
+
+  const handleUploadDemoPdf = async (file: File) => {
+    try {
+      const token = localStorage.getItem('token');
+      const formData = new FormData();
+      formData.append('demoPdf', file);
+
+      const response = await axios.post(`${API_BASE_URL}/api/upload-demo-pdf`, formData, {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      alert('Demo PDF uploaded successfully!');
+      checkDemoPdfStatus();
+      setShowPdfUpload(false);
+    } catch (error) {
+      console.error('Error uploading demo PDF:', error);
+      alert('Error uploading demo PDF. Please try again.');
+    }
+  };
+
   return (
     <Box>
       <Heading mb={6} color="blue.600">
         Teacher Dashboard
       </Heading>
+
+      {/* Demo PDF Upload Section */}
+      <Card.Root mb={6}>
+        <Card.Header>
+          <Flex align="center">
+            <Heading size="md" color="purple.600">Demo PDF Management</Heading>
+            <Spacer />
+            <Badge colorScheme={demoPdfStatus.available ? 'green' : 'red'}>
+              {demoPdfStatus.available ? 'PDF Available' : 'No PDF Uploaded'}
+            </Badge>
+          </Flex>
+        </Card.Header>
+        <Card.Body>
+          <VStack gap={4} align="stretch">
+            <Text fontSize="sm" color="gray.600">
+              Upload a demo HPC PDF that will be downloaded when teachers generate HPCs for students.
+              {demoPdfStatus.available && ` Current file size: ${(demoPdfStatus.size / 1024).toFixed(1)} KB`}
+            </Text>
+            <HStack>
+              <Button
+                size="sm"
+                colorScheme="purple"
+                variant="outline"
+                onClick={() => setShowPdfUpload(true)}
+              >
+                <FaUpload />
+                Upload Demo PDF
+              </Button>
+              {demoPdfStatus.available && (
+                <Text fontSize="xs" color="green.600">
+                  ✓ Demo PDF is ready for HPC generation
+                </Text>
+              )}
+            </HStack>
+          </VStack>
+        </Card.Body>
+      </Card.Root>
 
       {/* Class & Student Selection */}
       <Card.Root mb={6}>
@@ -246,7 +356,7 @@ const TeacherDashboard: React.FC = () => {
             </Flex>
           </Card.Header>
           <Card.Body>
-            <SimpleGrid columns={{ base: 2, md: 6 }} gap={4}>
+            <SimpleGrid columns={{ base: 2, md: 7 }} gap={4}>
               <Button
                 size="sm"
                 colorScheme="blue"
@@ -300,6 +410,15 @@ const TeacherDashboard: React.FC = () => {
               >
                 <FaCheck />
                 Assessment Rubric
+              </Button>
+              <Button
+                size="sm"
+                colorScheme="red"
+                variant="outline"
+                onClick={() => handleGenerateHPC()}
+              >
+                <FaFilePdf />
+                Generate HPC
               </Button>
             </SimpleGrid>
           </Card.Body>
@@ -379,6 +498,73 @@ const TeacherDashboard: React.FC = () => {
             student={selectedStudent}
             onClose={() => setShowPortfolio(false)}
           />
+        </Box>
+      )}
+
+      {/* Demo PDF Upload Modal */}
+      {showPdfUpload && (
+        <Box
+          position="fixed"
+          top="0"
+          left="0"
+          w="100vw"
+          h="100vh"
+          bg="blackAlpha.600"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          zIndex="modal"
+          onClick={() => setShowPdfUpload(false)}
+        >
+          <Box 
+            maxW="md" 
+            w="90%" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Card.Root>
+              <Card.Header>
+                <Flex align="center">
+                  <Heading size="md" color="purple.600">
+                    Upload Demo PDF
+                  </Heading>
+                  <Spacer />
+                  <Button size="sm" variant="ghost" onClick={() => setShowPdfUpload(false)}>
+                    <FaTimes />
+                  </Button>
+                </Flex>
+              </Card.Header>
+              <Card.Body>
+                <VStack gap={4} align="stretch">
+                  <Text fontSize="sm" color="gray.600">
+                    Choose a PDF file to use as the demo HPC that will be downloaded when teachers generate HPCs.
+                  </Text>
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        if (file.type !== 'application/pdf') {
+                          alert('Please select a PDF file');
+                          return;
+                        }
+                        handleUploadDemoPdf(file);
+                      }
+                    }}
+                    style={{
+                      padding: '8px',
+                      border: '2px dashed #e2e8f0',
+                      borderRadius: '6px',
+                      cursor: 'pointer'
+                    }}
+                  />
+                  <Text fontSize="xs" color="gray.500">
+                    Only PDF files are allowed. Maximum recommended size: 10MB
+                  </Text>
+                </VStack>
+              </Card.Body>
+            </Card.Root>
+          </Box>
         </Box>
       )}
 
