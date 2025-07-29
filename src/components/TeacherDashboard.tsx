@@ -12,13 +12,14 @@ import {
   Flex,
   Spacer,
 } from '@chakra-ui/react';
-import { FaUsers, FaClipboardList, FaChartLine, FaComments, FaFileAlt, FaEye } from 'react-icons/fa';
+import { FaUsers, FaClipboardList, FaChartLine, FaComments, FaFileAlt, FaEye, FaImage, FaCheck } from 'react-icons/fa';
 import axios from 'axios';
 import { API_BASE_URL } from '../config/constants';
 import StudentInteractionForms from './StudentInteractionForms';
 import ActivityCreationForm from './ActivityCreationForm';
 import ClassActivityFeed from './ClassActivityFeed';
 import StudentTimeline from './StudentTimeline';
+import StudentPortfolio from './StudentPortfolio';
 
 interface Class {
   id: number;
@@ -46,10 +47,12 @@ const TeacherDashboard: React.FC = () => {
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [loading, setLoading] = useState(false);
-  const [activeForm, setActiveForm] = useState<'general' | 'parent' | 'student' | 'peer' | 'observation' | null>(null);
+  const [activeForm, setActiveForm] = useState<'general' | 'parent' | 'student' | 'peer' | 'observation' | 'assessment' | null>(null);
   const [showActivityForm, setShowActivityForm] = useState(false);
   const [showActivityFeed, setShowActivityFeed] = useState(false);
   const [showTimeline, setShowTimeline] = useState(false);
+  const [showPortfolio, setShowPortfolio] = useState(false);
+  const [selectedTerm, setSelectedTerm] = useState<'term1' | 'term2'>('term1');
 
   useEffect(() => {
     fetchClasses();
@@ -211,10 +214,39 @@ const TeacherDashboard: React.FC = () => {
       {selectedStudent && (
         <Card.Root mb={6}>
           <Card.Header>
-            <Heading size="md" color="purple.600">Student Interaction Tools</Heading>
+            <Flex align="center">
+              <VStack align="start" gap={1}>
+                <Heading size="md" color="purple.600">Student Interaction Tools</Heading>
+                <Text fontSize="sm" color="gray.600">
+                  Recording interactions for {selectedStudent.name}
+                </Text>
+              </VStack>
+              <Spacer />
+              <HStack gap={2}>
+                <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                  Academic Term:
+                </Text>
+                <Button
+                  size="xs"
+                  variant={selectedTerm === 'term1' ? 'solid' : 'outline'}
+                  colorScheme="purple"
+                  onClick={() => setSelectedTerm('term1')}
+                >
+                  Term 1
+                </Button>
+                <Button
+                  size="xs"
+                  variant={selectedTerm === 'term2' ? 'solid' : 'outline'}
+                  colorScheme="purple"
+                  onClick={() => setSelectedTerm('term2')}
+                >
+                  Term 2
+                </Button>
+              </HStack>
+            </Flex>
           </Card.Header>
           <Card.Body>
-            <SimpleGrid columns={{ base: 2, md: 5 }} gap={4}>
+            <SimpleGrid columns={{ base: 2, md: 6 }} gap={4}>
               <Button
                 size="sm"
                 colorScheme="blue"
@@ -258,7 +290,16 @@ const TeacherDashboard: React.FC = () => {
                 onClick={() => setActiveForm('observation')}
               >
                 <FaEye />
-                Teacher Observation
+                Teacher Anecdote
+              </Button>
+              <Button
+                size="sm"
+                colorScheme="blue"
+                variant="outline"
+                onClick={() => setActiveForm('assessment')}
+              >
+                <FaCheck />
+                Assessment Rubric
               </Button>
             </SimpleGrid>
           </Card.Body>
@@ -281,8 +322,8 @@ const TeacherDashboard: React.FC = () => {
           onClick={() => setActiveForm(null)}
         >
           <Box 
-            maxW="lg" 
-            w="90%" 
+            maxW={activeForm === 'assessment' ? '6xl' : 'lg'} 
+            w={activeForm === 'assessment' ? '95%' : '90%'} 
             maxH="90vh" 
             overflowY="auto"
             onClick={(e) => e.stopPropagation()}
@@ -290,6 +331,7 @@ const TeacherDashboard: React.FC = () => {
             <StudentInteractionForms
               student={selectedStudent}
               formType={activeForm}
+              selectedTerm={selectedTerm}
               onClose={() => setActiveForm(null)}
             />
           </Box>
@@ -330,8 +372,18 @@ const TeacherDashboard: React.FC = () => {
         </Box>
       )}
 
+      {/* Student Portfolio */}
+      {selectedStudent && showPortfolio && (
+        <Box mb={6}>
+          <StudentPortfolio
+            student={selectedStudent}
+            onClose={() => setShowPortfolio(false)}
+          />
+        </Box>
+      )}
+
       {/* Main Feature Cards */}
-      <SimpleGrid columns={{ base: 1, md: 3 }} gap={6}>
+      <SimpleGrid columns={{ base: 1, md: 4 }} gap={6}>
         <Box bg="white" p={6} borderRadius="md" boxShadow="sm" textAlign="center">
           <Box mb={4} display="flex" justifyContent="center">
             <FaClipboardList size={48} color="#38a169" />
@@ -383,6 +435,24 @@ const TeacherDashboard: React.FC = () => {
             onClick={() => setShowTimeline(true)}
           >
             View Timeline
+          </Button>
+        </Box>
+
+        <Box bg="white" p={6} borderRadius="md" boxShadow="sm" textAlign="center">
+          <Box mb={4} display="flex" justifyContent="center">
+            <FaImage size={48} color="#d53f8c" />
+          </Box>
+          <Heading size="md" mb={2}>Student Portfolio</Heading>
+          <Text color="gray.600" mb={4}>
+            Upload and manage student artwork and projects
+          </Text>
+          <Button 
+            colorScheme="pink" 
+            size="sm" 
+            disabled={!selectedStudent}
+            onClick={() => setShowPortfolio(true)}
+          >
+            Manage Portfolio
           </Button>
         </Box>
       </SimpleGrid>

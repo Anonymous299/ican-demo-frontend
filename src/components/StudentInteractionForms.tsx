@@ -11,6 +11,7 @@ import {
   Flex,
   Spacer,
   Card,
+  Table,
 } from '@chakra-ui/react';
 import { FaTimes, FaSave } from 'react-icons/fa';
 import axios from 'axios';
@@ -46,13 +47,15 @@ type FormConfig = FeedbackFormConfig | ObservationFormConfig;
 interface StudentInteractionFormsProps {
   student: Student;
   onClose: () => void;
-  formType: 'general' | 'parent' | 'student' | 'peer' | 'observation';
+  formType: 'general' | 'parent' | 'student' | 'peer' | 'observation' | 'assessment';
+  selectedTerm?: 'term1' | 'term2';
 }
 
 const StudentInteractionForms: React.FC<StudentInteractionFormsProps> = ({
   student,
   onClose,
-  formType
+  formType,
+  selectedTerm = 'term1'
 }) => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -63,6 +66,12 @@ const StudentInteractionForms: React.FC<StudentInteractionFormsProps> = ({
     setting: 'classroom',
     duration: '',
   });
+  const [rubric, setRubric] = useState({
+    awareness: { stream: '', mountain: '', sky: '' },
+    sensitivity: { stream: '', mountain: '', sky: '' },
+    creativity: { stream: '', mountain: '', sky: '' }
+  });
+  const [rubricEntries, setRubricEntries] = useState<any[]>([]);
 
   const [generalInfoData, setGeneralInfoData] = useState({
     myNameIs: '',
@@ -104,11 +113,17 @@ const StudentInteractionForms: React.FC<StudentInteractionFormsProps> = ({
       categories: ['collaboration', 'friendship', 'conflict-resolution', 'teamwork', 'social-skills']
     },
     observation: {
-      title: 'Teacher Observation Form',
+      title: 'Teacher Anecdote Form',
       color: 'teal',
       fields: ['content', 'domain', 'competency', 'setting', 'duration'],
       domains: ['CG-1', 'CG-2', 'CG-3', 'academic', 'social-emotional'],
       settings: ['classroom', 'playground', 'lunch', 'assembly', 'field-trip', 'other']
+    },
+    assessment: {
+      title: 'Assessment Rubric',
+      color: 'blue',
+      fields: ['rubric'],
+      activities: []
     }
   };
 
@@ -118,8 +133,11 @@ const StudentInteractionForms: React.FC<StudentInteractionFormsProps> = ({
   useEffect(() => {
     if (formType === 'general') {
       fetchGeneralInfo();
+    } else if (formType === 'assessment') {
+      fetchRubricEntries();
+      fetchExistingAssessment();
     }
-  }, [formType, student.id]);
+  }, [formType, student.id, selectedTerm]);
 
   const fetchGeneralInfo = async () => {
     try {
@@ -131,6 +149,61 @@ const StudentInteractionForms: React.FC<StudentInteractionFormsProps> = ({
     } catch (error) {
       console.error('Error fetching general info:', error);
       // If no existing data, just continue with empty form
+    }
+  };
+
+  const fetchRubricEntries = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_BASE_URL}/api/rubric-entries`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      setRubricEntries(response.data);
+    } catch (error) {
+      console.error('Error fetching rubric entries:', error);
+    }
+  };
+
+  const handleRubricChange = (dimension: string, level: string, value: string) => {
+    setRubric(prev => ({
+      ...prev,
+      [dimension]: {
+        ...prev[dimension],
+        [level]: value
+      }
+    }));
+  };
+
+  const getRubricEntriesForLevel = (dimension: string, level: string) => {
+    const entry = rubricEntries.find(entry => 
+      entry.dimension === dimension && entry.level === level
+    );
+    return entry ? entry.entries : [];
+  };
+
+  const fetchExistingAssessment = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_BASE_URL}/api/assessments/${student.id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      // Find assessment for the selected term
+      const existingAssessment = response.data.find(assessment => assessment.term === selectedTerm);
+      
+      if (existingAssessment && existingAssessment.rubric) {
+        setRubric(existingAssessment.rubric);
+      } else {
+        // Reset to empty rubric if no existing assessment for this term
+        setRubric({
+          awareness: { stream: '', mountain: '', sky: '' },
+          sensitivity: { stream: '', mountain: '', sky: '' },
+          creativity: { stream: '', mountain: '', sky: '' }
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching existing assessment:', error);
+      // If no existing data, just continue with empty rubric
     }
   };
 
@@ -154,17 +227,29 @@ const StudentInteractionForms: React.FC<StudentInteractionFormsProps> = ({
         endpoint = '/api/observations';
         payload = {
           studentId: student.id,
+          term: selectedTerm,
           ...formData
+        };
+      } else if (formType === 'assessment') {
+        // Use PUT to handle both create and update
+        endpoint = `/api/assessments/${student.id}/${selectedTerm}`;
+        payload = {
+          rubric: rubric
         };
       } else {
         endpoint = `/api/feedback/${formType}`;
         payload = {
           studentId: student.id,
+          term: selectedTerm,
           ...formData
         };
       }
 
-      await axios.post(`${API_BASE_URL}${endpoint}`, payload, { headers });
+      if (formType === 'assessment') {
+        await axios.put(`${API_BASE_URL}${endpoint}`, payload, { headers });
+      } else {
+        await axios.post(`${API_BASE_URL}${endpoint}`, payload, { headers });
+      }
       alert(`${config.title} saved successfully!`);
       onClose();
     } catch (error) {
@@ -185,6 +270,7 @@ const StudentInteractionForms: React.FC<StudentInteractionFormsProps> = ({
             </Heading>
             <Text fontSize="sm" color="gray.600">
               For: {student.name} (Age {student.age})
+              {formType !== 'general' && ` • ${selectedTerm === 'term1' ? 'Term 1' : 'Term 2'}`}
             </Text>
           </VStack>
           <Spacer />
@@ -419,6 +505,314 @@ const StudentInteractionForms: React.FC<StudentInteractionFormsProps> = ({
               </HStack>
             )}
 
+            {/* Assessment Rubric Form */}
+            {formType === 'assessment' && (
+              <Box>
+                <Text mb={4} fontWeight="medium" fontSize="lg">Assessment Rubric for {student.name}</Text>
+                <Text mb={4} fontSize="sm" color="gray.600">
+                  Use the dropdowns to select from sample criteria or type custom assessments for each level.
+                </Text>
+                <Box borderRadius="md" border="1px solid" borderColor="gray.200" overflow="hidden">
+                  <Table.Root>
+                    <Table.Header>
+                      <Table.Row bg="gray.50">
+                        <Table.ColumnHeader fontWeight="bold" w="150px">Dimension</Table.ColumnHeader>
+                        <Table.ColumnHeader fontWeight="bold">Stream</Table.ColumnHeader>
+                        <Table.ColumnHeader fontWeight="bold">Mountain</Table.ColumnHeader>
+                        <Table.ColumnHeader fontWeight="bold">Sky</Table.ColumnHeader>
+                      </Table.Row>
+                    </Table.Header>
+                    <Table.Body>
+                      {/* Awareness Row */}
+                      <Table.Row>
+                        <Table.Cell fontWeight="medium" bg="blue.50" color="blue.700">
+                          Awareness
+                        </Table.Cell>
+                        <Table.Cell p={2}>
+                          <VStack gap={2} align="stretch">
+                            <select
+                              value={rubric.awareness.stream}
+                              onChange={(e) => handleRubricChange('awareness', 'stream', e.target.value)}
+                              style={{
+                                width: '100%',
+                                padding: '6px 8px',
+                                borderRadius: '6px',
+                                border: '1px solid #e2e8f0',
+                                fontSize: '12px',
+                              }}
+                            >
+                              <option value="">Select sample or type below...</option>
+                              {getRubricEntriesForLevel('awareness', 'stream').map((entry, index) => (
+                                <option key={index} value={entry}>
+                                  {entry}
+                                </option>
+                              ))}
+                            </select>
+                            <Textarea
+                              value={rubric.awareness.stream}
+                              onChange={(e) => handleRubricChange('awareness', 'stream', e.target.value)}
+                              placeholder="Type custom criteria or select from dropdown above..."
+                              size="sm"
+                              rows={2}
+                            />
+                          </VStack>
+                        </Table.Cell>
+                        <Table.Cell p={2}>
+                          <VStack gap={2} align="stretch">
+                            <select
+                              value={rubric.awareness.mountain}
+                              onChange={(e) => handleRubricChange('awareness', 'mountain', e.target.value)}
+                              style={{
+                                width: '100%',
+                                padding: '6px 8px',
+                                borderRadius: '6px',
+                                border: '1px solid #e2e8f0',
+                                fontSize: '12px',
+                              }}
+                            >
+                              <option value="">Select sample or type below...</option>
+                              {getRubricEntriesForLevel('awareness', 'mountain').map((entry, index) => (
+                                <option key={index} value={entry}>
+                                  {entry}
+                                </option>
+                              ))}
+                            </select>
+                            <Textarea
+                              value={rubric.awareness.mountain}
+                              onChange={(e) => handleRubricChange('awareness', 'mountain', e.target.value)}
+                              placeholder="Type custom criteria or select from dropdown above..."
+                              size="sm"
+                              rows={2}
+                            />
+                          </VStack>
+                        </Table.Cell>
+                        <Table.Cell p={2}>
+                          <VStack gap={2} align="stretch">
+                            <select
+                              value={rubric.awareness.sky}
+                              onChange={(e) => handleRubricChange('awareness', 'sky', e.target.value)}
+                              style={{
+                                width: '100%',
+                                padding: '6px 8px',
+                                borderRadius: '6px',
+                                border: '1px solid #e2e8f0',
+                                fontSize: '12px',
+                              }}
+                            >
+                              <option value="">Select sample or type below...</option>
+                              {getRubricEntriesForLevel('awareness', 'sky').map((entry, index) => (
+                                <option key={index} value={entry}>
+                                  {entry}
+                                </option>
+                              ))}
+                            </select>
+                            <Textarea
+                              value={rubric.awareness.sky}
+                              onChange={(e) => handleRubricChange('awareness', 'sky', e.target.value)}
+                              placeholder="Type custom criteria or select from dropdown above..."
+                              size="sm"
+                              rows={2}
+                            />
+                          </VStack>
+                        </Table.Cell>
+                      </Table.Row>
+
+                      {/* Sensitivity Row */}
+                      <Table.Row>
+                        <Table.Cell fontWeight="medium" bg="green.50" color="green.700">
+                          Sensitivity
+                        </Table.Cell>
+                        <Table.Cell p={2}>
+                          <VStack gap={2} align="stretch">
+                            <select
+                              value={rubric.sensitivity.stream}
+                              onChange={(e) => handleRubricChange('sensitivity', 'stream', e.target.value)}
+                              style={{
+                                width: '100%',
+                                padding: '6px 8px',
+                                borderRadius: '6px',
+                                border: '1px solid #e2e8f0',
+                                fontSize: '12px',
+                              }}
+                            >
+                              <option value="">Select sample or type below...</option>
+                              {getRubricEntriesForLevel('sensitivity', 'stream').map((entry, index) => (
+                                <option key={index} value={entry}>
+                                  {entry}
+                                </option>
+                              ))}
+                            </select>
+                            <Textarea
+                              value={rubric.sensitivity.stream}
+                              onChange={(e) => handleRubricChange('sensitivity', 'stream', e.target.value)}
+                              placeholder="Type custom criteria or select from dropdown above..."
+                              size="sm"
+                              rows={2}
+                            />
+                          </VStack>
+                        </Table.Cell>
+                        <Table.Cell p={2}>
+                          <VStack gap={2} align="stretch">
+                            <select
+                              value={rubric.sensitivity.mountain}
+                              onChange={(e) => handleRubricChange('sensitivity', 'mountain', e.target.value)}
+                              style={{
+                                width: '100%',
+                                padding: '6px 8px',
+                                borderRadius: '6px',
+                                border: '1px solid #e2e8f0',
+                                fontSize: '12px',
+                              }}
+                            >
+                              <option value="">Select sample or type below...</option>
+                              {getRubricEntriesForLevel('sensitivity', 'mountain').map((entry, index) => (
+                                <option key={index} value={entry}>
+                                  {entry}
+                                </option>
+                              ))}
+                            </select>
+                            <Textarea
+                              value={rubric.sensitivity.mountain}
+                              onChange={(e) => handleRubricChange('sensitivity', 'mountain', e.target.value)}
+                              placeholder="Type custom criteria or select from dropdown above..."
+                              size="sm"
+                              rows={2}
+                            />
+                          </VStack>
+                        </Table.Cell>
+                        <Table.Cell p={2}>
+                          <VStack gap={2} align="stretch">
+                            <select
+                              value={rubric.sensitivity.sky}
+                              onChange={(e) => handleRubricChange('sensitivity', 'sky', e.target.value)}
+                              style={{
+                                width: '100%',
+                                padding: '6px 8px',
+                                borderRadius: '6px',
+                                border: '1px solid #e2e8f0',
+                                fontSize: '12px',
+                              }}
+                            >
+                              <option value="">Select sample or type below...</option>
+                              {getRubricEntriesForLevel('sensitivity', 'sky').map((entry, index) => (
+                                <option key={index} value={entry}>
+                                  {entry}
+                                </option>
+                              ))}
+                            </select>
+                            <Textarea
+                              value={rubric.sensitivity.sky}
+                              onChange={(e) => handleRubricChange('sensitivity', 'sky', e.target.value)}
+                              placeholder="Type custom criteria or select from dropdown above..."
+                              size="sm"
+                              rows={2}
+                            />
+                          </VStack>
+                        </Table.Cell>
+                      </Table.Row>
+
+                      {/* Creativity Row */}
+                      <Table.Row>
+                        <Table.Cell fontWeight="medium" bg="purple.50" color="purple.700">
+                          Creativity
+                        </Table.Cell>
+                        <Table.Cell p={2}>
+                          <VStack gap={2} align="stretch">
+                            <select
+                              value={rubric.creativity.stream}
+                              onChange={(e) => handleRubricChange('creativity', 'stream', e.target.value)}
+                              style={{
+                                width: '100%',
+                                padding: '6px 8px',
+                                borderRadius: '6px',
+                                border: '1px solid #e2e8f0',
+                                fontSize: '12px',
+                              }}
+                            >
+                              <option value="">Select sample or type below...</option>
+                              {getRubricEntriesForLevel('creativity', 'stream').map((entry, index) => (
+                                <option key={index} value={entry}>
+                                  {entry}
+                                </option>
+                              ))}
+                            </select>
+                            <Textarea
+                              value={rubric.creativity.stream}
+                              onChange={(e) => handleRubricChange('creativity', 'stream', e.target.value)}
+                              placeholder="Type custom criteria or select from dropdown above..."
+                              size="sm"
+                              rows={2}
+                            />
+                          </VStack>
+                        </Table.Cell>
+                        <Table.Cell p={2}>
+                          <VStack gap={2} align="stretch">
+                            <select
+                              value={rubric.creativity.mountain}
+                              onChange={(e) => handleRubricChange('creativity', 'mountain', e.target.value)}
+                              style={{
+                                width: '100%',
+                                padding: '6px 8px',
+                                borderRadius: '6px',
+                                border: '1px solid #e2e8f0',
+                                fontSize: '12px',
+                              }}
+                            >
+                              <option value="">Select sample or type below...</option>
+                              {getRubricEntriesForLevel('creativity', 'mountain').map((entry, index) => (
+                                <option key={index} value={entry}>
+                                  {entry}
+                                </option>
+                              ))}
+                            </select>
+                            <Textarea
+                              value={rubric.creativity.mountain}
+                              onChange={(e) => handleRubricChange('creativity', 'mountain', e.target.value)}
+                              placeholder="Type custom criteria or select from dropdown above..."
+                              size="sm"
+                              rows={2}
+                            />
+                          </VStack>
+                        </Table.Cell>
+                        <Table.Cell p={2}>
+                          <VStack gap={2} align="stretch">
+                            <select
+                              value={rubric.creativity.sky}
+                              onChange={(e) => handleRubricChange('creativity', 'sky', e.target.value)}
+                              style={{
+                                width: '100%',
+                                padding: '6px 8px',
+                                borderRadius: '6px',
+                                border: '1px solid #e2e8f0',
+                                fontSize: '12px',
+                              }}
+                            >
+                              <option value="">Select sample or type below...</option>
+                              {getRubricEntriesForLevel('creativity', 'sky').map((entry, index) => (
+                                <option key={index} value={entry}>
+                                  {entry}
+                                </option>
+                              ))}
+                            </select>
+                            <Textarea
+                              value={rubric.creativity.sky}
+                              onChange={(e) => handleRubricChange('creativity', 'sky', e.target.value)}
+                              placeholder="Type custom criteria or select from dropdown above..."
+                              size="sm"
+                              rows={2}
+                            />
+                          </VStack>
+                        </Table.Cell>
+                      </Table.Row>
+                    </Table.Body>
+                  </Table.Root>
+                </Box>
+                <Text fontSize="sm" color="gray.600" mt={2}>
+                  Fill out the rubric to define assessment criteria at different levels of achievement for this student.
+                </Text>
+              </Box>
+            )}
+
             {/* Submit Buttons */}
             <HStack justify="flex-end" gap={3} pt={4}>
               <Button variant="outline" onClick={onClose}>
@@ -430,7 +824,7 @@ const StudentInteractionForms: React.FC<StudentInteractionFormsProps> = ({
                 loading={loading}
               >
                 <FaSave />
-                Save {formType === 'observation' ? 'Observation' : 'Feedback'}
+                Save {formType === 'assessment' ? 'Assessment' : formType === 'observation' ? 'Observation' : 'Feedback'}
               </Button>
             </HStack>
           </VStack>

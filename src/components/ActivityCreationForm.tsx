@@ -11,7 +11,6 @@ import {
   Flex,
   Spacer,
   Card,
-  Table,
   Badge,
 } from '@chakra-ui/react';
 import { FaTimes, FaSave } from 'react-icons/fa';
@@ -36,6 +35,7 @@ interface LearningOutcome {
   outcomes: string[];
 }
 
+
 interface Class {
   id: number;
   name: string;
@@ -45,17 +45,6 @@ interface Class {
   currentEnrollment: number;
 }
 
-interface RubricCell {
-  stream: string;
-  mountain: string;
-  sky: string;
-}
-
-interface Rubric {
-  awareness: RubricCell;
-  sensitivity: RubricCell;
-  creativity: RubricCell;
-}
 
 interface ActivityCreationFormProps {
   selectedClass: Class;
@@ -78,11 +67,6 @@ const ActivityCreationForm: React.FC<ActivityCreationFormProps> = ({
     domainId: '',
     competencyIds: [] as string[],
     selectedLearningOutcomes: [] as string[],
-  });
-  const [rubric, setRubric] = useState<Rubric>({
-    awareness: { stream: '', mountain: '', sky: '' },
-    sensitivity: { stream: '', mountain: '', sky: '' },
-    creativity: { stream: '', mountain: '', sky: '' }
   });
 
   useEffect(() => {
@@ -118,19 +102,7 @@ const ActivityCreationForm: React.FC<ActivityCreationFormProps> = ({
     }
   };
 
-  const handleRubricChange = (
-    dimension: keyof Rubric,
-    level: keyof RubricCell,
-    value: string
-  ) => {
-    setRubric(prev => ({
-      ...prev,
-      [dimension]: {
-        ...prev[dimension],
-        [level]: value
-      }
-    }));
-  };
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -158,8 +130,7 @@ const ActivityCreationForm: React.FC<ActivityCreationFormProps> = ({
         title: formData.title,
         domainId: formData.domainId,
         competencyIds: formData.competencyIds.map(id => parseInt(id)),
-        learningOutcomes: formData.selectedLearningOutcomes,
-        rubric
+        learningOutcomes: formData.selectedLearningOutcomes
       };
 
       await axios.post(`${API_BASE_URL}/api/activities`, payload);
@@ -268,66 +239,6 @@ const ActivityCreationForm: React.FC<ActivityCreationFormProps> = ({
               </VStack>
             </Box>
 
-            {/* Rubric Preview */}
-            <Box>
-              <Text mb={4} fontWeight="medium" fontSize="lg">Assessment Rubric</Text>
-              <Box borderRadius="md" border="1px solid" borderColor="gray.200" overflow="hidden">
-                <Table.Root size="sm">
-                  <Table.Header>
-                    <Table.Row bg="gray.50">
-                      <Table.ColumnHeader fontWeight="bold" w="120px">Dimension</Table.ColumnHeader>
-                      <Table.ColumnHeader fontWeight="bold">Stream</Table.ColumnHeader>
-                      <Table.ColumnHeader fontWeight="bold">Mountain</Table.ColumnHeader>
-                      <Table.ColumnHeader fontWeight="bold">Sky</Table.ColumnHeader>
-                    </Table.Row>
-                  </Table.Header>
-                  <Table.Body>
-                    <Table.Row>
-                      <Table.Cell fontWeight="medium" bg="blue.50" color="blue.700">
-                        Awareness
-                      </Table.Cell>
-                      <Table.Cell fontSize="sm" color="gray.700">
-                        {rubric.awareness.stream || <Text color="gray.400">Not specified</Text>}
-                      </Table.Cell>
-                      <Table.Cell fontSize="sm" color="gray.700">
-                        {rubric.awareness.mountain || <Text color="gray.400">Not specified</Text>}
-                      </Table.Cell>
-                      <Table.Cell fontSize="sm" color="gray.700">
-                        {rubric.awareness.sky || <Text color="gray.400">Not specified</Text>}
-                      </Table.Cell>
-                    </Table.Row>
-                    <Table.Row>
-                      <Table.Cell fontWeight="medium" bg="green.50" color="green.700">
-                        Sensitivity
-                      </Table.Cell>
-                      <Table.Cell fontSize="sm" color="gray.700">
-                        {rubric.sensitivity.stream || <Text color="gray.400">Not specified</Text>}
-                      </Table.Cell>
-                      <Table.Cell fontSize="sm" color="gray.700">
-                        {rubric.sensitivity.mountain || <Text color="gray.400">Not specified</Text>}
-                      </Table.Cell>
-                      <Table.Cell fontSize="sm" color="gray.700">
-                        {rubric.sensitivity.sky || <Text color="gray.400">Not specified</Text>}
-                      </Table.Cell>
-                    </Table.Row>
-                    <Table.Row>
-                      <Table.Cell fontWeight="medium" bg="purple.50" color="purple.700">
-                        Creativity
-                      </Table.Cell>
-                      <Table.Cell fontSize="sm" color="gray.700">
-                        {rubric.creativity.stream || <Text color="gray.400">Not specified</Text>}
-                      </Table.Cell>
-                      <Table.Cell fontSize="sm" color="gray.700">
-                        {rubric.creativity.mountain || <Text color="gray.400">Not specified</Text>}
-                      </Table.Cell>
-                      <Table.Cell fontSize="sm" color="gray.700">
-                        {rubric.creativity.sky || <Text color="gray.400">Not specified</Text>}
-                      </Table.Cell>
-                    </Table.Row>
-                  </Table.Body>
-                </Table.Root>
-              </Box>
-            </Box>
 
             {/* Action Buttons */}
             <HStack justify="space-between" pt={4}>
@@ -568,128 +479,6 @@ const ActivityCreationForm: React.FC<ActivityCreationFormProps> = ({
               )}
             </Box>
 
-            {/* Rubric Section */}
-            <Box>
-              <Text mb={4} fontWeight="medium" fontSize="lg">Assessment Rubric</Text>
-              <Box borderRadius="md" border="1px solid" borderColor="gray.200" overflow="hidden">
-                <Table.Root>
-                  <Table.Header>
-                    <Table.Row bg="gray.50">
-                      <Table.ColumnHeader fontWeight="bold" w="150px">Dimension</Table.ColumnHeader>
-                      <Table.ColumnHeader fontWeight="bold">Stream</Table.ColumnHeader>
-                      <Table.ColumnHeader fontWeight="bold">Mountain</Table.ColumnHeader>
-                      <Table.ColumnHeader fontWeight="bold">Sky</Table.ColumnHeader>
-                    </Table.Row>
-                  </Table.Header>
-                  <Table.Body>
-                    {/* Awareness Row */}
-                    <Table.Row>
-                      <Table.Cell fontWeight="medium" bg="blue.50" color="blue.700">
-                        Awareness
-                      </Table.Cell>
-                      <Table.Cell p={2}>
-                        <Textarea
-                          value={rubric.awareness.stream}
-                          onChange={(e) => handleRubricChange('awareness', 'stream', e.target.value)}
-                          placeholder="Awareness at Stream level..."
-                          size="sm"
-                          rows={2}
-                        />
-                      </Table.Cell>
-                      <Table.Cell p={2}>
-                        <Textarea
-                          value={rubric.awareness.mountain}
-                          onChange={(e) => handleRubricChange('awareness', 'mountain', e.target.value)}
-                          placeholder="Awareness at Mountain level..."
-                          size="sm"
-                          rows={2}
-                        />
-                      </Table.Cell>
-                      <Table.Cell p={2}>
-                        <Textarea
-                          value={rubric.awareness.sky}
-                          onChange={(e) => handleRubricChange('awareness', 'sky', e.target.value)}
-                          placeholder="Awareness at Sky level..."
-                          size="sm"
-                          rows={2}
-                        />
-                      </Table.Cell>
-                    </Table.Row>
-
-                    {/* Sensitivity Row */}
-                    <Table.Row>
-                      <Table.Cell fontWeight="medium" bg="green.50" color="green.700">
-                        Sensitivity
-                      </Table.Cell>
-                      <Table.Cell p={2}>
-                        <Textarea
-                          value={rubric.sensitivity.stream}
-                          onChange={(e) => handleRubricChange('sensitivity', 'stream', e.target.value)}
-                          placeholder="Sensitivity at Stream level..."
-                          size="sm"
-                          rows={2}
-                        />
-                      </Table.Cell>
-                      <Table.Cell p={2}>
-                        <Textarea
-                          value={rubric.sensitivity.mountain}
-                          onChange={(e) => handleRubricChange('sensitivity', 'mountain', e.target.value)}
-                          placeholder="Sensitivity at Mountain level..."
-                          size="sm"
-                          rows={2}
-                        />
-                      </Table.Cell>
-                      <Table.Cell p={2}>
-                        <Textarea
-                          value={rubric.sensitivity.sky}
-                          onChange={(e) => handleRubricChange('sensitivity', 'sky', e.target.value)}
-                          placeholder="Sensitivity at Sky level..."
-                          size="sm"
-                          rows={2}
-                        />
-                      </Table.Cell>
-                    </Table.Row>
-
-                    {/* Creativity Row */}
-                    <Table.Row>
-                      <Table.Cell fontWeight="medium" bg="purple.50" color="purple.700">
-                        Creativity
-                      </Table.Cell>
-                      <Table.Cell p={2}>
-                        <Textarea
-                          value={rubric.creativity.stream}
-                          onChange={(e) => handleRubricChange('creativity', 'stream', e.target.value)}
-                          placeholder="Creativity at Stream level..."
-                          size="sm"
-                          rows={2}
-                        />
-                      </Table.Cell>
-                      <Table.Cell p={2}>
-                        <Textarea
-                          value={rubric.creativity.mountain}
-                          onChange={(e) => handleRubricChange('creativity', 'mountain', e.target.value)}
-                          placeholder="Creativity at Mountain level..."
-                          size="sm"
-                          rows={2}
-                        />
-                      </Table.Cell>
-                      <Table.Cell p={2}>
-                        <Textarea
-                          value={rubric.creativity.sky}
-                          onChange={(e) => handleRubricChange('creativity', 'sky', e.target.value)}
-                          placeholder="Creativity at Sky level..."
-                          size="sm"
-                          rows={2}
-                        />
-                      </Table.Cell>
-                    </Table.Row>
-                  </Table.Body>
-                </Table.Root>
-              </Box>
-              <Text fontSize="sm" color="gray.600" mt={2}>
-                Fill out the rubric to define assessment criteria at different levels of achievement.
-              </Text>
-            </Box>
 
             {/* Submit Buttons */}
             <HStack justify="flex-end" gap={3} pt={4}>
