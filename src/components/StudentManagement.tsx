@@ -15,6 +15,9 @@ import axios from 'axios';
 import { API_BASE_URL } from '../config/constants';
 import { Student } from '../types/student';
 
+const STANDARDS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
+const DIVISIONS = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+
 const StudentManagement: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -27,8 +30,10 @@ const StudentManagement: React.FC = () => {
     rollNumber: '',
     studentId: '',
     dateOfBirth: '',
-    class: ''
+    standard: '',
+    division: ''
   });
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -90,8 +95,43 @@ const StudentManagement: React.FC = () => {
       rollNumber: '',
       studentId: '',
       dateOfBirth: '',
-      class: ''
+      standard: '',
+      division: ''
     });
+  };
+
+  // Handle edit student
+  const handleEditStudent = (student: Student) => {
+    setEditingStudent(student);
+    setFormData({
+      name: student.name,
+      rollNumber: student.rollNumber,
+      studentId: student.studentId,
+      dateOfBirth: student.dateOfBirth,
+      standard: student.standard,
+      division: student.division,
+    });
+    setShowAddForm(true);
+  };
+
+  // Handle delete student
+  const handleDeleteStudent = async (studentId: number) => {
+    if (window.confirm('Are you sure you want to delete this student?')) {
+      try {
+        const token = localStorage.getItem('token');
+        await axios.delete(`${API_BASE_URL}/api/students/${studentId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        // Refresh students list
+        await fetchStudents();
+      } catch (error) {
+        console.error('Error deleting student:', error);
+        // TODO: Show error message to user
+      }
+    }
   };
 
   // Submit new student
@@ -102,12 +142,23 @@ const StudentManagement: React.FC = () => {
       setSubmitting(true);
       const token = localStorage.getItem('token');
       
-      await axios.post(`${API_BASE_URL}/api/students`, formData, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      if (editingStudent) {
+        // Update existing student
+        await axios.put(`${API_BASE_URL}/api/students/${editingStudent.id}`, formData, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+      } else {
+        // Create new student
+        await axios.post(`${API_BASE_URL}/api/students`, formData, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+      }
       
       // Refresh students list
       await fetchStudents();
@@ -115,6 +166,7 @@ const StudentManagement: React.FC = () => {
       // Reset form and close modal
       resetForm();
       setShowAddForm(false);
+      setEditingStudent(null);
       
     } catch (error) {
       console.error('Error adding student:', error);
@@ -184,10 +236,19 @@ const StudentManagement: React.FC = () => {
             </Text>
           </VStack>
           <HStack gap={2}>
-            <Button size="sm" variant="outline">
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => handleEditStudent(student)}
+            >
               Edit
             </Button>
-            <Button size="sm" variant="outline" colorScheme="red">
+            <Button 
+              size="sm" 
+              variant="outline" 
+              colorScheme="red"
+              onClick={() => handleDeleteStudent(student.id)}
+            >
               Delete
             </Button>
           </HStack>
@@ -367,13 +428,16 @@ const StudentManagement: React.FC = () => {
             <Card.Root maxW="md" w="90%" maxH="90vh" overflowY="auto">
               <Card.Header>
                 <HStack justify="space-between">
-                  <Heading size="lg">Add New Student</Heading>
+                  <Heading size="lg">
+                    {editingStudent ? 'Edit Student' : 'Add New Student'}
+                  </Heading>
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={() => {
                       resetForm();
                       setShowAddForm(false);
+                      setEditingStudent(null);
                     }}
                   >
                     ✕
@@ -416,25 +480,63 @@ const StudentManagement: React.FC = () => {
                     </Box>
                   </HStack>
 
+                  <Box>
+                    <Text mb={2} fontWeight="medium">Date of Birth *</Text>
+                    <Input
+                      type="date"
+                      value={formData.dateOfBirth}
+                      onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+                      required
+                    />
+                  </Box>
+
                   <HStack gap={4}>
                     <Box flex="1">
-                      <Text mb={2} fontWeight="medium">Date of Birth *</Text>
-                      <Input
-                        type="date"
-                        value={formData.dateOfBirth}
-                        onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+                      <Text mb={2} fontWeight="medium">Standard *</Text>
+                      <select
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '6px',
+                          backgroundColor: 'white',
+                          fontSize: '14px'
+                        }}
+                        value={formData.standard}
+                        onChange={(e) => handleInputChange('standard', e.target.value)}
                         required
-                      />
+                      >
+                        <option value="">Select Standard</option>
+                        {STANDARDS.map((standard) => (
+                          <option key={standard} value={standard}>
+                            {standard}
+                          </option>
+                        ))}
+                      </select>
                     </Box>
 
                     <Box flex="1">
-                      <Text mb={2} fontWeight="medium">Class *</Text>
-                      <Input
-                        value={formData.class}
-                        onChange={(e) => handleInputChange('class', e.target.value)}
-                        placeholder="e.g. Grade 1A"
+                      <Text mb={2} fontWeight="medium">Division *</Text>
+                      <select
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '6px',
+                          backgroundColor: 'white',
+                          fontSize: '14px'
+                        }}
+                        value={formData.division}
+                        onChange={(e) => handleInputChange('division', e.target.value)}
                         required
-                      />
+                      >
+                        <option value="">Select Division</option>
+                        {DIVISIONS.map((division) => (
+                          <option key={division} value={division}>
+                            {division}
+                          </option>
+                        ))}
+                      </select>
                     </Box>
                   </HStack>
                 </VStack>
@@ -447,6 +549,7 @@ const StudentManagement: React.FC = () => {
                     onClick={() => {
                       resetForm();
                       setShowAddForm(false);
+                      setEditingStudent(null);
                     }}
                   >
                     Cancel
@@ -456,7 +559,7 @@ const StudentManagement: React.FC = () => {
                     colorScheme="blue"
                     loading={submitting}
                   >
-                    Add Student
+                    {editingStudent ? 'Update Student' : 'Add Student'}
                   </Button>
                 </HStack>
                 </Card.Footer>
@@ -500,7 +603,7 @@ const StudentManagement: React.FC = () => {
                     <Text fontWeight="medium" mb={2}>Excel File Requirements:</Text>
                     <VStack align="start" gap={1} fontSize="sm" color="gray.600">
                       <Text>• First row should contain headers</Text>
-                      <Text>• Required columns: Name, RollNumber (or Roll Number), StudentId (or Student ID), DateOfBirth (or Date of Birth), Class</Text>
+                      <Text>• Required columns: Name, RollNumber (or Roll Number), StudentId (or Student ID), DateOfBirth (or Date of Birth), Standard, Division</Text>
                       <Text>• Date format: YYYY-MM-DD or MM/DD/YYYY</Text>
                       <Text>• File formats: .xlsx, .xls</Text>
                     </VStack>

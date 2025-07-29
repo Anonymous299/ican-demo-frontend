@@ -4,7 +4,9 @@ export interface Student {
   rollNumber: string;
   studentId: string;
   dateOfBirth: string; // ISO date string for easier JSON serialization
-  class: string;
+  standard: string; // 1-10
+  division: string; // A-G
+  class: string; // Computed field: "Grade {standard}{division}"
   createdAt: string;
   updatedAt: string;
 }
@@ -14,7 +16,8 @@ export interface CreateStudentRequest {
   rollNumber: string;
   studentId: string;
   dateOfBirth: string;
-  class: string;
+  standard: string;
+  division: string;
 }
 
 export interface UpdateStudentRequest extends Partial<CreateStudentRequest> {

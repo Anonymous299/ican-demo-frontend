@@ -19,6 +19,21 @@ import axios from 'axios';
 import { API_BASE_URL } from '../config/constants';
 
 const AVAILABLE_SUBJECTS = ['Math', 'English', 'Hindi', 'Science', 'Geography'];
+const STANDARDS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
+const DIVISIONS = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+
+// Generate all possible class combinations
+const generateClassOptions = () => {
+  const classes = [];
+  for (const standard of STANDARDS) {
+    for (const division of DIVISIONS) {
+      classes.push(`Grade ${standard}${division}`);
+    }
+  }
+  return classes;
+};
+
+const AVAILABLE_CLASSES = generateClassOptions();
 
 interface Teacher {
   id: number;
@@ -27,6 +42,7 @@ interface Teacher {
   phone: string;
   subjects: string[];
   classes: string[];
+  classSubjects?: { [className: string]: string[] }; // Optional for backward compatibility
   isClassTeacher: boolean;
   classTeacherFor: string | null;
   createdAt: string;
@@ -43,8 +59,8 @@ const TeacherManagement: React.FC = () => {
     name: '',
     email: '',
     phone: '',
-    subjects: [] as string[],
-    classes: '',
+    classSubjects: {} as { [className: string]: string[] }, // Maps class -> subjects
+    classes: [] as string[],
     isClassTeacher: false,
     classTeacherFor: '',
   });
@@ -67,10 +83,20 @@ const TeacherManagement: React.FC = () => {
 
   const handleAddTeacher = async () => {
     try {
+      // Convert classSubjects to flat subjects array for backend compatibility
+      const allSubjects = Array.from(new Set(
+        Object.values(formData.classSubjects).flat()
+      ));
+      
       const teacherData = {
-        ...formData,
-        subjects: formData.subjects,
-        classes: formData.classes.split(',').map(c => c.trim()).filter(c => c),
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        subjects: allSubjects,
+        classes: formData.classes,
+        classSubjects: formData.classSubjects, // Keep the detailed mapping for frontend
+        isClassTeacher: formData.isClassTeacher,
+        classTeacherFor: formData.classTeacherFor,
       };
 
       if (editingTeacher) {
@@ -99,12 +125,16 @@ const TeacherManagement: React.FC = () => {
 
   const handleEditTeacher = (teacher: Teacher) => {
     setEditingTeacher(teacher);
+    
+    // If teacher has classSubjects data, use it; otherwise create empty mapping
+    const classSubjects = (teacher as any).classSubjects || {};
+    
     setFormData({
       name: teacher.name,
       email: teacher.email,
       phone: teacher.phone,
-      subjects: teacher.subjects,
-      classes: teacher.classes.join(', '),
+      classSubjects: classSubjects,
+      classes: teacher.classes,
       isClassTeacher: teacher.isClassTeacher,
       classTeacherFor: teacher.classTeacherFor || '',
     });
@@ -116,8 +146,8 @@ const TeacherManagement: React.FC = () => {
       name: '',
       email: '',
       phone: '',
-      subjects: [],
-      classes: '',
+      classSubjects: {},
+      classes: [],
       isClassTeacher: false,
       classTeacherFor: '',
     });
@@ -221,96 +251,186 @@ const TeacherManagement: React.FC = () => {
                 </Box>
               </HStack>
 
-              <HStack w="100%" gap={4}>
-                <Box flex={1}>
-                  <Text mb={2} fontWeight="medium">Phone</Text>
-                  <Input
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="Phone number"
-                  />
-                </Box>
-                <Box flex={1}>
-                  <Text mb={2} fontWeight="medium">Subjects</Text>
-                  <VStack align="start" gap={2}>
-                    <select
-                      style={{
-                        width: '100%',
-                        padding: '8px 12px',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '6px',
-                        backgroundColor: 'white',
-                        fontSize: '14px'
-                      }}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                        const selectedSubject = e.target.value;
-                        if (selectedSubject && !formData.subjects.includes(selectedSubject)) {
-                          setFormData({ ...formData, subjects: [...formData.subjects, selectedSubject] });
-                        }
-                        e.target.value = ''; // Reset dropdown
-                      }}
-                    >
-                      <option value="">Select a subject to add</option>
-                      {AVAILABLE_SUBJECTS.filter(subject => !formData.subjects.includes(subject)).map((subject) => (
-                        <option key={subject} value={subject}>
-                          {subject}
-                        </option>
-                      ))}
-                    </select>
-                    
-                    {/* Display selected subjects */}
-                    {formData.subjects.length > 0 && (
-                      <Box w="100%">
-                        <Text fontSize="sm" color="gray.600" mb={2}>Selected Subjects:</Text>
-                        <HStack flexWrap="wrap" gap={2}>
-                          {formData.subjects.map((subject) => (
-                            <Badge
-                              key={subject}
-                              colorScheme="blue"
-                              variant="solid"
-                              px={2}
-                              py={1}
-                              cursor="pointer"
-                              onClick={() => setFormData({ 
-                                ...formData, 
-                                subjects: formData.subjects.filter(s => s !== subject) 
-                              })}
-                            >
-                              {subject} ×
-                            </Badge>
-                          ))}
-                        </HStack>
-                        <Text fontSize="xs" color="gray.500" mt={1}>
-                          Click on a subject to remove it
-                        </Text>
-                      </Box>
-                    )}
-                  </VStack>
-                </Box>
-              </HStack>
+              <Box w="100%">
+                <Text mb={2} fontWeight="medium">Phone</Text>
+                <Input
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="Phone number"
+                />
+              </Box>
 
-              <HStack w="100%" gap={4}>
-                <Box flex={1}>
-                  <Text mb={2} fontWeight="medium">Classes (comma-separated)</Text>
-                  <Input
-                    value={formData.classes}
-                    onChange={(e) => setFormData({ ...formData, classes: e.target.value })}
-                    placeholder="Grade 1A, Grade 2B"
-                  />
-                </Box>
-                <Box flex={1}>
-                  {formData.isClassTeacher && (
-                    <>
-                      <Text mb={2} fontWeight="medium">Class Teacher For</Text>
-                      <Input
-                        value={formData.classTeacherFor}
-                        onChange={(e) => setFormData({ ...formData, classTeacherFor: e.target.value })}
-                        placeholder="Grade 1A"
-                      />
-                    </>
+              <Box w="100%">
+                <Text mb={2} fontWeight="medium">Classes & Subjects</Text>
+                <Text fontSize="sm" color="gray.600" mb={3}>
+                  First add classes, then assign subjects for each class
+                </Text>
+                
+                {/* Class selection */}
+                <VStack align="start" gap={3}>
+                  <select
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '6px',
+                      backgroundColor: 'white',
+                      fontSize: '14px'
+                    }}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                      const selectedClass = e.target.value;
+                      if (selectedClass && !formData.classes.includes(selectedClass)) {
+                        setFormData({ 
+                          ...formData, 
+                          classes: [...formData.classes, selectedClass],
+                          classSubjects: {
+                            ...formData.classSubjects,
+                            [selectedClass]: [] // Initialize empty subjects for new class
+                          }
+                        });
+                      }
+                      e.target.value = ''; // Reset dropdown
+                    }}
+                  >
+                    <option value="">Select a class to add</option>
+                    {AVAILABLE_CLASSES.filter(className => !formData.classes.includes(className)).map((className) => (
+                      <option key={className} value={className}>
+                        {className}
+                      </option>
+                    ))}
+                  </select>
+                  
+                  {/* Display classes with their subjects */}
+                  {formData.classes.map((className) => (
+                    <Box key={className} w="100%" p={3} border="1px solid #e2e8f0" borderRadius="md" bg="gray.50">
+                      <HStack justify="space-between" mb={2}>
+                        <Text fontWeight="medium" color="green.600">{className}</Text>
+                        <Button
+                          size="xs"
+                          colorScheme="red"
+                          variant="outline"
+                          onClick={() => {
+                            const updatedClasses = formData.classes.filter(c => c !== className);
+                            const updatedClassSubjects = { ...formData.classSubjects };
+                            delete updatedClassSubjects[className];
+                            setFormData({ 
+                              ...formData, 
+                              classes: updatedClasses,
+                              classSubjects: updatedClassSubjects,
+                              // Clear classTeacherFor if the removed class was selected
+                              classTeacherFor: formData.classTeacherFor === className ? '' : formData.classTeacherFor
+                            });
+                          }}
+                        >
+                          Remove Class
+                        </Button>
+                      </HStack>
+                      
+                      {/* Subject selection for this class */}
+                      <VStack align="start" gap={2}>
+                        <select
+                          style={{
+                            width: '100%',
+                            padding: '6px 10px',
+                            border: '1px solid #cbd5e0',
+                            borderRadius: '4px',
+                            backgroundColor: 'white',
+                            fontSize: '13px'
+                          }}
+                          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                            const selectedSubject = e.target.value;
+                            const currentSubjects = formData.classSubjects[className] || [];
+                            if (selectedSubject && !currentSubjects.includes(selectedSubject)) {
+                              setFormData({
+                                ...formData,
+                                classSubjects: {
+                                  ...formData.classSubjects,
+                                  [className]: [...currentSubjects, selectedSubject]
+                                }
+                              });
+                            }
+                            e.target.value = ''; // Reset dropdown
+                          }}
+                        >
+                          <option value="">Add subject for {className}</option>
+                          {AVAILABLE_SUBJECTS.filter(subject => 
+                            !(formData.classSubjects[className] || []).includes(subject)
+                          ).map((subject) => (
+                            <option key={subject} value={subject}>
+                              {subject}
+                            </option>
+                          ))}
+                        </select>
+                        
+                        {/* Display subjects for this class */}
+                        {(formData.classSubjects[className] || []).length > 0 && (
+                          <HStack flexWrap="wrap" gap={1}>
+                            {(formData.classSubjects[className] || []).map((subject) => (
+                              <Badge
+                                key={subject}
+                                colorScheme="blue"
+                                variant="solid"
+                                px={2}
+                                py={1}
+                                cursor="pointer"
+                                fontSize="xs"
+                                onClick={() => {
+                                  const updatedSubjects = (formData.classSubjects[className] || []).filter(s => s !== subject);
+                                  setFormData({
+                                    ...formData,
+                                    classSubjects: {
+                                      ...formData.classSubjects,
+                                      [className]: updatedSubjects
+                                    }
+                                  });
+                                }}
+                              >
+                                {subject} ×
+                              </Badge>
+                            ))}
+                          </HStack>
+                        )}
+                      </VStack>
+                    </Box>
+                  ))}
+                  
+                  {formData.classes.length === 0 && (
+                    <Text fontSize="sm" color="gray.500" fontStyle="italic">
+                      No classes added yet. Select classes from the dropdown above.
+                    </Text>
+                  )}
+                </VStack>
+              </Box>
+
+              {formData.isClassTeacher && (
+                <Box w="100%">
+                  <Text mb={2} fontWeight="medium">Class Teacher For</Text>
+                  <select
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '6px',
+                      backgroundColor: 'white',
+                      fontSize: '14px'
+                    }}
+                    value={formData.classTeacherFor}
+                    onChange={(e) => setFormData({ ...formData, classTeacherFor: e.target.value })}
+                  >
+                    <option value="">Select class to be teacher for</option>
+                    {formData.classes.map((className) => (
+                      <option key={className} value={className}>
+                        {className}
+                      </option>
+                    ))}
+                  </select>
+                  {formData.classes.length === 0 && (
+                    <Text fontSize="xs" color="gray.500" mt={1}>
+                      Please assign classes first to select which one to be class teacher for
+                    </Text>
                   )}
                 </Box>
-              </HStack>
+              )}
 
               <Box w="100%">
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -370,7 +490,7 @@ const TeacherManagement: React.FC = () => {
               />
               
               <Text fontSize="xs" color="gray.500">
-                Subjects and Classes should be comma-separated. IsClassTeacher should be 'true' or 'false'.
+                Subjects and Classes should be comma-separated (use standardized format like "Grade 1A, Grade 2B"). IsClassTeacher should be 'true' or 'false'.
               </Text>
             </VStack>
           </Card.Body>
@@ -393,8 +513,7 @@ const TeacherManagement: React.FC = () => {
               <Table.ColumnHeader>Name</Table.ColumnHeader>
               <Table.ColumnHeader>Email</Table.ColumnHeader>
               <Table.ColumnHeader>Phone</Table.ColumnHeader>
-              <Table.ColumnHeader>Subjects</Table.ColumnHeader>
-              <Table.ColumnHeader>Classes</Table.ColumnHeader>
+              <Table.ColumnHeader>Classes & Subjects</Table.ColumnHeader>
               <Table.ColumnHeader>Class Teacher</Table.ColumnHeader>
               <Table.ColumnHeader>Actions</Table.ColumnHeader>
             </Table.Row>
@@ -406,20 +525,32 @@ const TeacherManagement: React.FC = () => {
                 <Table.Cell>{teacher.email}</Table.Cell>
                 <Table.Cell>{teacher.phone}</Table.Cell>
                 <Table.Cell>
-                  <VStack align="start" gap={1}>
-                    {teacher.subjects.map((subject, index) => (
-                      <Badge key={index} colorScheme="blue" size="sm">
-                        {subject}
-                      </Badge>
-                    ))}
-                  </VStack>
-                </Table.Cell>
-                <Table.Cell>
-                  <VStack align="start" gap={1}>
-                    {teacher.classes.map((className, index) => (
-                      <Badge key={index} colorScheme="green" size="sm">
-                        {className}
-                      </Badge>
+                  <VStack align="start" gap={2}>
+                    {teacher.classes.map((className) => (
+                      <Box key={className}>
+                        <Badge colorScheme="green" size="sm" mb={1}>
+                          {className}
+                        </Badge>
+                        {teacher.classSubjects && teacher.classSubjects[className] && (
+                          <HStack flexWrap="wrap" gap={1} mt={1}>
+                            {teacher.classSubjects[className].map((subject) => (
+                              <Badge key={subject} colorScheme="blue" size="xs" variant="outline">
+                                {subject}
+                              </Badge>
+                            ))}
+                          </HStack>
+                        )}
+                        {/* Fallback: show all subjects if classSubjects not available */}
+                        {(!teacher.classSubjects || !teacher.classSubjects[className]) && (
+                          <HStack flexWrap="wrap" gap={1} mt={1}>
+                            {teacher.subjects.map((subject) => (
+                              <Badge key={subject} colorScheme="blue" size="xs" variant="outline">
+                                {subject}
+                              </Badge>
+                            ))}
+                          </HStack>
+                        )}
+                      </Box>
                     ))}
                   </VStack>
                 </Table.Cell>
