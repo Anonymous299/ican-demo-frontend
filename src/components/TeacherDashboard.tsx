@@ -265,14 +265,34 @@ const TeacherDashboard: React.FC = () => {
         </Card.Root>
       )}
 
-      {/* Student Interaction Form */}
+      {/* Student Interaction Form - Overlay Popup */}
       {selectedStudent && activeForm && (
-        <Box mb={6}>
-          <StudentInteractionForms
-            student={selectedStudent}
-            formType={activeForm}
-            onClose={() => setActiveForm(null)}
-          />
+        <Box
+          position="fixed"
+          top="0"
+          left="0"
+          w="100vw"
+          h="100vh"
+          bg="blackAlpha.600"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          zIndex="modal"
+          onClick={() => setActiveForm(null)}
+        >
+          <Box 
+            maxW="lg" 
+            w="90%" 
+            maxH="90vh" 
+            overflowY="auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <StudentInteractionForms
+              student={selectedStudent}
+              formType={activeForm}
+              onClose={() => setActiveForm(null)}
+            />
+          </Box>
         </Box>
       )}
 
