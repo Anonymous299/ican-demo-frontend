@@ -297,10 +297,10 @@ const TeacherDashboard: React.FC = () => {
       )}
 
       {/* Activity Creation Form */}
-      {selectedStudent && showActivityForm && (
+      {selectedClass && showActivityForm && (
         <Box mb={6}>
           <ActivityCreationForm
-            student={selectedStudent}
+            selectedClass={selectedClass}
             onClose={() => setShowActivityForm(false)}
             onSuccess={() => {
               alert('Activity created successfully!');
@@ -338,12 +338,12 @@ const TeacherDashboard: React.FC = () => {
           </Box>
           <Heading size="md" mb={2}>Activity Creation</Heading>
           <Text color="gray.600" mb={4}>
-            Create activities with domains and competencies
+            Create class-wide activities with domains and competencies
           </Text>
           <Button 
             colorScheme="green" 
             size="sm" 
-            disabled={!selectedStudent}
+            disabled={!selectedClass}
             onClick={() => setShowActivityForm(true)}
           >
             Create Activity

@@ -11,14 +11,14 @@ import {
   Flex,
   Spacer,
 } from '@chakra-ui/react';
-import { FaTimes, FaEye, FaCalendarAlt, FaUser, FaEdit, FaTrash } from 'react-icons/fa';
+import { FaTimes, FaEye, FaCalendarAlt, FaEdit, FaTrash } from 'react-icons/fa';
 import axios from 'axios';
 import { API_BASE_URL } from '../config/constants';
 
 interface Activity {
   id: number;
   title: string;
-  studentId: number;
+  classId: number;
   teacherId: number;
   domainId: number;
   competencyId: number;
@@ -33,12 +33,6 @@ interface Activity {
   competency?: { id: number; name: string; description: string };
 }
 
-interface Student {
-  id: number;
-  name: string;
-  age: number;
-  classId: number;
-}
 
 interface Class {
   id: number;
@@ -56,7 +50,6 @@ const ClassActivityFeed: React.FC<ClassActivityFeedProps> = ({
   onClose
 }) => {
   const [activities, setActivities] = useState<Activity[]>([]);
-  const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
 
@@ -68,18 +61,9 @@ const ClassActivityFeed: React.FC<ClassActivityFeedProps> = ({
     try {
       setLoading(true);
       
-      // Fetch students in this class
-      const studentsResponse = await axios.get(`${API_BASE_URL}/api/students?classId=${selectedClass.id}`);
-      setStudents(studentsResponse.data);
-      
-      // Fetch all activities for students in this class
-      const studentIds = studentsResponse.data.map((s: Student) => s.id);
-      const activitiesPromises = studentIds.map((studentId: any) =>
-        axios.get(`${API_BASE_URL}/api/activities/${studentId}`)
-      );
-      
-      const activitiesResponses = await Promise.all(activitiesPromises);
-      const allActivities = activitiesResponses.flatMap(response => response.data);
+      // Fetch all activities for this class
+      const activitiesResponse = await axios.get(`${API_BASE_URL}/api/activities/class/${selectedClass.id}`);
+      const allActivities = activitiesResponse.data;
       
       // Sort by creation date (newest first)
       allActivities.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -92,10 +76,6 @@ const ClassActivityFeed: React.FC<ClassActivityFeedProps> = ({
     }
   };
 
-  const getStudentName = (studentId: number) => {
-    const student = students.find(s => s.id === studentId);
-    return student ? student.name : 'Unknown Student';
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -148,7 +128,7 @@ const ClassActivityFeed: React.FC<ClassActivityFeedProps> = ({
           ) : activities.length === 0 ? (
             <Box textAlign="center" py={8} color="gray.500">
               <Text fontSize="lg" mb={2}>No activities found</Text>
-              <Text fontSize="sm">No activities have been created for students in this class yet</Text>
+              <Text fontSize="sm">No activities have been created for this class yet</Text>
             </Box>
           ) : (
             <VStack gap={4} align="stretch">
@@ -171,10 +151,6 @@ const ClassActivityFeed: React.FC<ClassActivityFeedProps> = ({
                             {activity.title}
                           </Heading>
                           <HStack gap={2}>
-                            <Badge colorScheme="green" size="sm">
-                              <FaUser size={10} />
-                              {getStudentName(activity.studentId)}
-                            </Badge>
                             <Badge colorScheme="blue" size="sm">
                               {activity.domain?.name || 'Unknown Domain'}
                             </Badge>
@@ -253,9 +229,6 @@ const ClassActivityFeed: React.FC<ClassActivityFeedProps> = ({
                 <VStack align="start" gap={1}>
                   <Heading size="md">{selectedActivity.title}</Heading>
                   <HStack gap={2}>
-                    <Badge colorScheme="green">
-                      Student: {getStudentName(selectedActivity.studentId)}
-                    </Badge>
                     <Badge colorScheme="blue">
                       {selectedActivity.domain?.name}
                     </Badge>

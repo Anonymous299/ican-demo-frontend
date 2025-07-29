@@ -90,7 +90,7 @@ const StudentTimeline: React.FC<StudentTimelineProps> = ({
     try {
       setLoading(true);
       
-      // Fetch activities
+      // Fetch activities for student's class (activities are now class-wide)
       const activitiesResponse = await axios.get(`${API_BASE_URL}/api/activities/${student.id}`);
       const activities = activitiesResponse.data.map((item: Activity) => ({
         ...item,
@@ -294,7 +294,7 @@ const StudentTimeline: React.FC<StudentTimelineProps> = ({
               <Text fontSize="sm">
                 {searchTerm || filterType !== 'all' 
                   ? 'Try adjusting your search or filter criteria'
-                  : 'No activities, feedback, or observations have been recorded for this student yet'
+                  : 'No activities, feedback, or observations have been recorded for this student or their class yet'
                 }
               </Text>
             </Box>

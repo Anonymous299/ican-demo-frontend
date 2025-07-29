@@ -30,14 +30,13 @@ interface Competency {
   description: string;
 }
 
-interface Student {
+interface Class {
   id: number;
   name: string;
-  age: number;
-  classId: number;
-  dateOfBirth: string;
-  parentContact: string;
-  notes: string;
+  description: string;
+  teacherId: number;
+  capacity: number;
+  currentEnrollment: number;
 }
 
 interface RubricCell {
@@ -53,13 +52,13 @@ interface Rubric {
 }
 
 interface ActivityCreationFormProps {
-  student: Student;
+  selectedClass: Class;
   onClose: () => void;
   onSuccess?: () => void;
 }
 
 const ActivityCreationForm: React.FC<ActivityCreationFormProps> = ({
-  student,
+  selectedClass,
   onClose,
   onSuccess
 }) => {
@@ -126,7 +125,7 @@ const ActivityCreationForm: React.FC<ActivityCreationFormProps> = ({
 
     try {
       const payload = {
-        studentId: student.id,
+        classId: selectedClass.id,
         title: formData.title,
         domainId: formData.domainId,
         competencyId: formData.competencyId,
@@ -185,7 +184,7 @@ const ActivityCreationForm: React.FC<ActivityCreationFormProps> = ({
                 </HStack>
                 
                 <Text fontSize="sm" color="gray.600">
-                  <strong>Student:</strong> {student.name} (Age {student.age})
+                  <strong>Class:</strong> {selectedClass.name} ({selectedClass.currentEnrollment} students)
                 </Text>
                 
                 <HStack gap={4}>
@@ -305,7 +304,7 @@ const ActivityCreationForm: React.FC<ActivityCreationFormProps> = ({
               Create New Activity
             </Heading>
             <Text fontSize="sm" color="gray.600">
-              For: {student.name} (Age {student.age})
+              For: {selectedClass.name} ({selectedClass.currentEnrollment} students)
             </Text>
           </VStack>
           <Spacer />
