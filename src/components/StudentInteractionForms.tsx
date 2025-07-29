@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -64,12 +64,26 @@ const StudentInteractionForms: React.FC<StudentInteractionFormsProps> = ({
     duration: '',
   });
 
+  const [generalInfoData, setGeneralInfoData] = useState({
+    myNameIs: '',
+    thingsILike: '',
+    iLiveIn: '',
+    myBirthday: '',
+    myFriendsAre: '',
+    myFavouriteColours: '',
+    myFavouriteFoods: '',
+    myFavouriteGames: '',
+    myFavouriteAnimals: '',
+    height: '',
+    weight: '',
+  });
+
   const formConfig = {
     general: {
       title: 'General Student Information Form',
       color: 'blue',
-      fields: ['content', 'category'],
-      categories: ['academic', 'social', 'behavioral', 'health', 'other']
+      fields: ['generalInfo'],
+      isGeneralInfo: true
     },
     parent: {
       title: 'Parent Feedback Form',
@@ -100,18 +114,57 @@ const StudentInteractionForms: React.FC<StudentInteractionFormsProps> = ({
 
   const config = formConfig[formType];
 
+  // Load existing general info data when component mounts for general form
+  useEffect(() => {
+    if (formType === 'general') {
+      fetchGeneralInfo();
+    }
+  }, [formType, student.id]);
+
+  const fetchGeneralInfo = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_BASE_URL}/api/students/${student.id}/general-info`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      setGeneralInfoData(prevData => ({ ...prevData, ...response.data }));
+    } catch (error) {
+      console.error('Error fetching general info:', error);
+      // If no existing data, just continue with empty form
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const endpoint = formType === 'observation' ? '/api/observations' : `/api/feedback/${formType}`;
-      const payload = {
-        studentId: student.id,
-        ...formData
-      };
+      let endpoint, payload;
+      
+      const token = localStorage.getItem('token');
+      const headers = { 'Authorization': `Bearer ${token}` };
+      
+      if (formType === 'general') {
+        endpoint = '/api/students/general-info';
+        payload = {
+          studentId: student.id,
+          generalInfo: generalInfoData
+        };
+      } else if (formType === 'observation') {
+        endpoint = '/api/observations';
+        payload = {
+          studentId: student.id,
+          ...formData
+        };
+      } else {
+        endpoint = `/api/feedback/${formType}`;
+        payload = {
+          studentId: student.id,
+          ...formData
+        };
+      }
 
-      await axios.post(`${API_BASE_URL}${endpoint}`, payload);
+      await axios.post(`${API_BASE_URL}${endpoint}`, payload, { headers });
       alert(`${config.title} saved successfully!`);
       onClose();
     } catch (error) {
@@ -144,19 +197,130 @@ const StudentInteractionForms: React.FC<StudentInteractionFormsProps> = ({
       <Card.Body>
         <form onSubmit={handleSubmit}>
           <VStack gap={4} align="stretch">
-            {/* Main Content Field */}
-            <Box>
-              <Text mb={2} fontWeight="medium">
-                {formType === 'observation' ? 'Observation Notes' : 'Feedback Content'}
-              </Text>
-              <Textarea
-                value={formData.content}
-                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                placeholder={`Enter detailed ${formType === 'observation' ? 'observations' : 'feedback'}...`}
-                rows={6}
-                required
-              />
-            </Box>
+            {/* General Info Fields */}
+            {formType === 'general' && (
+              <>
+                <Box>
+                  <Text mb={2} fontWeight="medium">My name is</Text>
+                  <Input
+                    value={generalInfoData.myNameIs}
+                    onChange={(e) => setGeneralInfoData({ ...generalInfoData, myNameIs: e.target.value })}
+                    placeholder="What the child likes to be called"
+                  />
+                </Box>
+
+                <Box>
+                  <Text mb={2} fontWeight="medium">Things I like</Text>
+                  <Textarea
+                    value={generalInfoData.thingsILike}
+                    onChange={(e) => setGeneralInfoData({ ...generalInfoData, thingsILike: e.target.value })}
+                    placeholder="Activities, subjects, hobbies the child enjoys"
+                    rows={3}
+                  />
+                </Box>
+
+                <Box>
+                  <Text mb={2} fontWeight="medium">I live in</Text>
+                  <Input
+                    value={generalInfoData.iLiveIn}
+                    onChange={(e) => setGeneralInfoData({ ...generalInfoData, iLiveIn: e.target.value })}
+                    placeholder="Area, neighborhood, or city where the child lives"
+                  />
+                </Box>
+
+                <Box>
+                  <Text mb={2} fontWeight="medium">My birthday</Text>
+                  <Input
+                    type="date"
+                    value={generalInfoData.myBirthday}
+                    onChange={(e) => setGeneralInfoData({ ...generalInfoData, myBirthday: e.target.value })}
+                  />
+                </Box>
+
+                <Box>
+                  <Text mb={2} fontWeight="medium">My friends are</Text>
+                  <Textarea
+                    value={generalInfoData.myFriendsAre}
+                    onChange={(e) => setGeneralInfoData({ ...generalInfoData, myFriendsAre: e.target.value })}
+                    placeholder="Names of close friends or classmates"
+                    rows={2}
+                  />
+                </Box>
+
+                <HStack gap={4}>
+                  <Box flex={1}>
+                    <Text mb={2} fontWeight="medium">My favourite colours</Text>
+                    <Input
+                      value={generalInfoData.myFavouriteColours}
+                      onChange={(e) => setGeneralInfoData({ ...generalInfoData, myFavouriteColours: e.target.value })}
+                      placeholder="e.g., Blue, Red, Yellow"
+                    />
+                  </Box>
+                  <Box flex={1}>
+                    <Text mb={2} fontWeight="medium">My favourite foods</Text>
+                    <Input
+                      value={generalInfoData.myFavouriteFoods}
+                      onChange={(e) => setGeneralInfoData({ ...generalInfoData, myFavouriteFoods: e.target.value })}
+                      placeholder="e.g., Pizza, Ice cream, Fruits"
+                    />
+                  </Box>
+                </HStack>
+
+                <HStack gap={4}>
+                  <Box flex={1}>
+                    <Text mb={2} fontWeight="medium">My favourite games</Text>
+                    <Input
+                      value={generalInfoData.myFavouriteGames}
+                      onChange={(e) => setGeneralInfoData({ ...generalInfoData, myFavouriteGames: e.target.value })}
+                      placeholder="e.g., Hide and seek, Drawing, Building blocks"
+                    />
+                  </Box>
+                  <Box flex={1}>
+                    <Text mb={2} fontWeight="medium">My favourite animals</Text>
+                    <Input
+                      value={generalInfoData.myFavouriteAnimals}
+                      onChange={(e) => setGeneralInfoData({ ...generalInfoData, myFavouriteAnimals: e.target.value })}
+                      placeholder="e.g., Dogs, Cats, Elephants"
+                    />
+                  </Box>
+                </HStack>
+
+                <HStack gap={4}>
+                  <Box flex={1}>
+                    <Text mb={2} fontWeight="medium">Height</Text>
+                    <Input
+                      value={generalInfoData.height}
+                      onChange={(e) => setGeneralInfoData({ ...generalInfoData, height: e.target.value })}
+                      placeholder="e.g., 120 cm"
+                    />
+                  </Box>
+                  <Box flex={1}>
+                    <Text mb={2} fontWeight="medium">Weight</Text>
+                    <Input
+                      value={generalInfoData.weight}
+                      onChange={(e) => setGeneralInfoData({ ...generalInfoData, weight: e.target.value })}
+                      placeholder="e.g., 25 kg"
+                    />
+                  </Box>
+                </HStack>
+              </>
+            )}
+
+            {/* Main Content Field for other forms */}
+            {formType !== 'general' && (
+              <Box>
+                <Text mb={2} fontWeight="medium">
+                  {formType === 'observation' ? 'Observation Notes' : 'Feedback Content'}
+                </Text>
+                <Textarea
+                  value={formData.content}
+                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                  placeholder={`Enter detailed ${formType === 'observation' ? 'observations' : 'feedback'}...`}
+                  rows={6}
+                  required
+                />
+              </Box>
+            )}
 
             {/* Category Field */}
             {config.fields.includes('category') && (
