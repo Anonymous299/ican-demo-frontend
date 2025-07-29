@@ -19,7 +19,7 @@ import { API_BASE_URL } from '../config/constants';
 interface Activity {
   id: number;
   title: string;
-  studentId: number;
+  classId: number;
   teacherId: number;
   domainId: number;
   competencyId: number;
@@ -90,15 +90,21 @@ const StudentTimeline: React.FC<StudentTimelineProps> = ({
     try {
       setLoading(true);
       
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Authorization': `Bearer ${token}`
+      };
+
       // Fetch activities for student's class (activities are now class-wide)
-      const activitiesResponse = await axios.get(`${API_BASE_URL}/api/activities/${student.id}`);
+      const activitiesResponse = await axios.get(`${API_BASE_URL}/api/activities/${student.id}`, { headers });
+      console.log('StudentTimeline - Activities fetched for student', student.id, ':', activitiesResponse.data);
       const activities = activitiesResponse.data.map((item: Activity) => ({
         ...item,
         type: 'activity' as const
       }));
 
       // Fetch feedback
-      const feedbackResponse = await axios.get(`${API_BASE_URL}/api/feedback/${student.id}`);
+      const feedbackResponse = await axios.get(`${API_BASE_URL}/api/feedback/${student.id}`, { headers });
       const allFeedback = [
         ...feedbackResponse.data.general.map((item: Feedback) => ({ ...item, type: 'feedback' as const })),
         ...feedbackResponse.data.parent.map((item: Feedback) => ({ ...item, type: 'feedback' as const })),
@@ -107,7 +113,7 @@ const StudentTimeline: React.FC<StudentTimelineProps> = ({
       ];
 
       // Fetch observations
-      const observationsResponse = await axios.get(`${API_BASE_URL}/api/observations/${student.id}`);
+      const observationsResponse = await axios.get(`${API_BASE_URL}/api/observations/${student.id}`, { headers });
       const observations = observationsResponse.data.map((item: Observation) => ({
         ...item,
         type: 'observation' as const
