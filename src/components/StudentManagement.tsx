@@ -241,32 +241,71 @@ const StudentManagement: React.FC = () => {
 
 
   const renderStudentCard = (student: Student) => (
-    <Card.Root key={student.id} p={4} mb={3}>
+    <Card.Root 
+      key={student.id} 
+      p={4} 
+      mb={3}
+      bg="white"
+      borderRadius="xl"
+      boxShadow="md"
+      border="2px solid"
+      borderColor="purple.100"
+      _hover={{ 
+        borderColor: 'purple.300',
+        transform: 'translateY(-2px)',
+        boxShadow: 'lg'
+      }}
+      transition="all 0.2s"
+    >
       <Card.Body>
         <HStack justify="space-between">
           <VStack align="start" gap={1}>
-            <Text fontWeight="bold" fontSize="lg">
-              {student.name}
-            </Text>
-            <Text fontSize="sm" color="gray.600">
-              Roll No: {student.rollNumber} | Student ID: {student.studentId}
-            </Text>
-            <Text fontSize="sm" color="gray.600">
-              Class: {student.class} | DOB: {formatDateString(student.dateOfBirth)}
-            </Text>
+            <HStack>
+              <Box
+                w={2}
+                h={2}
+                borderRadius="full"
+                bg="green.400"
+              />
+              <Text fontWeight="bold" fontSize="lg" color="purple.800">
+                {student.name}
+              </Text>
+            </HStack>
+            <HStack gap={4}>
+              <Badge colorScheme="blue" variant="subtle">
+                Roll: {student.rollNumber}
+              </Badge>
+              <Badge colorScheme="teal" variant="subtle">
+                ID: {student.studentId}
+              </Badge>
+            </HStack>
+            <HStack gap={3} fontSize="sm">
+              <HStack>
+                <Text color="gray.600" fontWeight="medium">Class:</Text>
+                <Text color="purple.600" fontWeight="bold">{student.class}</Text>
+              </HStack>
+              <Text color="gray.400">|</Text>
+              <HStack>
+                <Text color="gray.600" fontWeight="medium">DOB:</Text>
+                <Text color="orange.600" fontWeight="medium">{formatDateString(student.dateOfBirth)}</Text>
+              </HStack>
+            </HStack>
           </VStack>
           <HStack gap={2}>
             <Button 
               size="sm" 
-              variant="outline"
+              bg="purple.500"
+              color="white"
+              _hover={{ bg: 'purple.600', transform: 'translateY(-1px)' }}
               onClick={() => handleEditStudent(student)}
             >
               Edit
             </Button>
             <Button 
               size="sm" 
-              variant="outline" 
-              colorScheme="red"
+              bg="red.500"
+              color="white"
+              _hover={{ bg: 'red.600', transform: 'translateY(-1px)' }}
               onClick={() => handleDeleteStudent(student.id)}
             >
               Delete
@@ -281,11 +320,23 @@ const StudentManagement: React.FC = () => {
     <Box>
       <VStack align="stretch" gap={6}>
         {/* Header */}
-        <Box>
-          <Heading size="lg" color="blue.600" mb={2}>
-            Student Management
+        <Box 
+          p={6} 
+          bg="white" 
+          borderRadius="xl" 
+          boxShadow="md"
+          borderLeft="4px solid"
+          borderLeftColor="blue.400"
+        >
+          <Heading 
+            size="lg" 
+            bgGradient="linear(to-r, blue.600, purple.500)"
+            bgClip="text"
+            mb={2}
+          >
+            🎓 Student Management
           </Heading>
-          <Text color="gray.600">
+          <Text color="gray.700" fontWeight="medium">
             Manage student records, add new students, or upload from Excel files
           </Text>
         </Box>
@@ -294,24 +345,44 @@ const StudentManagement: React.FC = () => {
         <HStack justify="space-between" wrap="wrap" gap={4}>
           <HStack gap={3}>
             <Button
-              colorScheme="blue"
               onClick={() => setShowAddForm(true)}
+              backgroundImage="linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)"
+              color="white"
+              _hover={{ 
+                backgroundImage: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
+                transform: 'translateY(-2px)',
+                boxShadow: 'lg'
+              }}
+              transition="all 0.2s"
             >
-              <FaPlus />
-              Add Student
+              <FaPlus /> Add Student
             </Button>
             <Button
-              variant="outline"
-              colorScheme="green"
+              variant="solid"
+              bg="teal.400"
+              color="white"
+              _hover={{ 
+                bg: 'teal.500',
+                transform: 'translateY(-2px)',
+                boxShadow: 'lg'
+              }}
+              transition="all 0.2s"
               onClick={() => setShowUploadForm(true)}
             >
-              <FaUpload />
-              Upload Excel
+              <FaUpload /> Upload Excel
             </Button>
           </HStack>
 
-          <HStack maxW="300px">
-            <Box color="gray.400">
+          <HStack 
+            maxW="300px"
+            bg="white"
+            p={2}
+            borderRadius="full"
+            boxShadow="md"
+            border="2px solid"
+            borderColor="purple.200"
+          >
+            <Box color="purple.500" pl={2}>
               <FaSearch />
             </Box>
             <Input
@@ -319,6 +390,8 @@ const StudentManagement: React.FC = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               variant="outline"
+              border="none"
+              px={2}
             />
           </HStack>
         </HStack>

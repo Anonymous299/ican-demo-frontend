@@ -20,18 +20,39 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
 
   return (
-    <Box minH="100vh" bg="gray.50">
-      <Box bg="white" shadow="sm" px={4} py={3}>
+    <Box minH="100vh" bg="green.50" backgroundImage="linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)">
+      <Box 
+        bg="white" 
+        shadow="lg" 
+        px={4} 
+        py={3}
+        borderBottom="3px solid"
+        borderBottomColor="green.400"
+        backgroundImage="linear-gradient(to right, #ffffff 0%, #f0fdf4 100%)"
+      >
         <Container maxW="7xl">
           <Flex align="center">
             <HStack gap={3}>
-              <Image 
-                src="/logo.jpeg" 
-                alt="e-Vriddhi Logo" 
-                boxSize="40px"
-                objectFit="contain"
-              />
-              <Heading size="md" color="blue.600">
+              <Box 
+                p={2} 
+                bg="green.100" 
+                borderRadius="lg"
+                boxShadow="0 2px 4px rgba(0,0,0,0.1)"
+              >
+                <Image 
+                  src="/logo.jpeg" 
+                  alt="e-Vriddhi Logo" 
+                  boxSize="40px"
+                  objectFit="contain"
+                  borderRadius="md"
+                />
+              </Box>
+              <Heading 
+                size="md" 
+                bgGradient="linear(to-r, green.600, teal.500)"
+                bgClip="text"
+                fontWeight="bold"
+              >
                 e-Vriddhi
               </Heading>
             </HStack>
@@ -39,13 +60,29 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <Spacer />
             
             <Flex align="center" gap={4}>
+              <Box 
+                px={3} 
+                py={1} 
+                bg="teal.50" 
+                borderRadius="full"
+                border="1px solid"
+                borderColor="teal.200"
+              >
+                <Text fontSize="sm" color="teal.700" fontWeight="medium">
+                  {user?.role === 'admin' ? '👨‍💼 Admin' : '👩‍🏫 Teacher'}
+                </Text>
+              </Box>
               <Text fontSize="sm" color="gray.600">
-                Logged in as: <strong>{user?.role === 'admin' ? 'Admin' : 'Teacher'}</strong>
+                {user?.email}
               </Text>
-              <Text fontSize="sm" color="gray.500">
-                ({user?.email})
-              </Text>
-              <Button size="sm" variant="outline" onClick={logout}>
+              <Button 
+                size="sm" 
+                colorScheme="red"
+                variant="solid"
+                onClick={logout}
+                _hover={{ transform: 'translateY(-2px)', boxShadow: 'lg' }}
+                transition="all 0.2s"
+              >
                 Logout
               </Button>
             </Flex>

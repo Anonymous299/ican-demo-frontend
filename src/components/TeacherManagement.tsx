@@ -14,7 +14,7 @@ import {
   Spacer,
   Card,
 } from '@chakra-ui/react';
-import { FaPlus, FaUpload, FaEdit, FaTrash, FaTimes } from 'react-icons/fa';
+import { FaPlus, FaUpload, FaEdit, FaTrash, FaTimes, FaSearch } from 'react-icons/fa';
 import axios from 'axios';
 import { API_BASE_URL } from '../config/constants';
 
@@ -185,31 +185,57 @@ const TeacherManagement: React.FC = () => {
 
   return (
     <Box>
-      <Flex align="center" mb={6}>
-        <Heading size="lg" color="blue.600">
-          Teacher Management
-        </Heading>
-        <Spacer />
+      <Box 
+        p={6} 
+        bg="white" 
+        borderRadius="xl" 
+        boxShadow="md"
+        borderLeft="4px solid"
+        borderLeftColor="teal.400"
+        mb={6}
+      >
+        <Flex align="center">
+          <Heading 
+            size="lg" 
+            bgGradient="linear(to-r, teal.600, cyan.500)"
+            bgClip="text"
+          >
+            👩‍🏫 Teacher Management
+          </Heading>
+          <Spacer />
         <HStack gap={3}>
           <Button
-            colorScheme="blue"
             onClick={() => {
               resetForm();
               setShowAddForm(true);
             }}
+            backgroundImage="linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%)"
+            color="white"
+            _hover={{ 
+              backgroundImage: 'linear-gradient(135deg, #0d9488 0%, #0891b2 100%)',
+              transform: 'translateY(-2px)',
+              boxShadow: 'lg'
+            }}
+            transition="all 0.2s"
           >
-            <FaPlus />
-            Add Teacher
+            <FaPlus /> Add Teacher
           </Button>
           <Button
-            colorScheme="green"
+            bg="emerald.400"
+            color="white"
+            _hover={{ 
+              bg: 'emerald.500',
+              transform: 'translateY(-2px)',
+              boxShadow: 'lg'
+            }}
+            transition="all 0.2s"
             onClick={() => setShowUploadForm(true)}
           >
-            <FaUpload />
-            Upload Excel
+            <FaUpload /> Upload Excel
           </Button>
         </HStack>
-      </Flex>
+        </Flex>
+      </Box>
 
       {/* Add/Edit Teacher Form */}
       {showAddForm && (
@@ -507,18 +533,32 @@ const TeacherManagement: React.FC = () => {
         </Card.Root>
       )}
 
-      <Box mb={4}>
+      <HStack 
+        mb={4}
+        maxW="400px"
+        bg="white"
+        p={2}
+        borderRadius="full"
+        boxShadow="md"
+        border="2px solid"
+        borderColor="teal.200"
+      >
+        <Box color="teal.500" pl={2}>
+          <FaSearch />
+        </Box>
         <Input
           placeholder="Search teachers by name or email..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          maxW="400px"
+          variant="outline"
+          border="none"
+          px={2}
         />
-      </Box>
+      </HStack>
 
-      <Box bg="white" borderRadius="md" shadow="sm" overflow="hidden">
+      <Box bg="white" borderRadius="xl" shadow="lg" overflow="hidden" border="2px solid" borderColor="teal.100">
         <Table.Root>
-          <Table.Header bg="gray.50">
+          <Table.Header bgGradient="linear(to-r, teal.50, cyan.50)">
             <Table.Row>
               <Table.ColumnHeader>Name</Table.ColumnHeader>
               <Table.ColumnHeader>Email</Table.ColumnHeader>
@@ -538,13 +578,13 @@ const TeacherManagement: React.FC = () => {
                   <VStack align="start" gap={2}>
                     {teacher.classes.map((className) => (
                       <Box key={className}>
-                        <Badge colorScheme="green" size="sm" mb={1}>
+                        <Badge colorScheme="teal" size="sm" mb={1} variant="solid">
                           {className}
                         </Badge>
                         {teacher.classSubjects && teacher.classSubjects[className] && (
                           <HStack flexWrap="wrap" gap={1} mt={1}>
                             {teacher.classSubjects[className].map((subject) => (
-                              <Badge key={subject} colorScheme="blue" size="xs" variant="outline">
+                              <Badge key={subject} colorScheme="purple" size="xs" variant="subtle">
                                 {subject}
                               </Badge>
                             ))}
@@ -554,7 +594,7 @@ const TeacherManagement: React.FC = () => {
                         {(!teacher.classSubjects || !teacher.classSubjects[className]) && (
                           <HStack flexWrap="wrap" gap={1} mt={1}>
                             {teacher.subjects.map((subject) => (
-                              <Badge key={subject} colorScheme="blue" size="xs" variant="outline">
+                              <Badge key={subject} colorScheme="purple" size="xs" variant="subtle">
                                 {subject}
                               </Badge>
                             ))}
