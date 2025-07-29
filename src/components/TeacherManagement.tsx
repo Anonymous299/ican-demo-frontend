@@ -479,8 +479,18 @@ const TeacherManagement: React.FC = () => {
           <Card.Body>
             <VStack gap={4}>
               <Text color="gray.600" fontSize="sm">
-                Upload an Excel file with columns: Name, Email, Phone, Subjects, Classes, IsClassTeacher, ClassTeacherFor
+                Upload an Excel file with columns: Name, Email, Phone, Classes, ClassSubjects (or Subjects), IsClassTeacher, ClassTeacherFor
               </Text>
+              
+              <Box>
+                <Text fontSize="sm" fontWeight="medium" mb={2}>Column formats:</Text>
+                <VStack align="start" gap={1} fontSize="xs" color="gray.600">
+                  <Text>• <strong>Classes:</strong> Comma-separated (e.g., "Grade 1A, Grade 2B")</Text>
+                  <Text>• <strong>ClassSubjects:</strong> Class-subject mapping (e.g., "Grade 1A:Math,Science;Grade 2B:English,Hindi")</Text>
+                  <Text>• <strong>Subjects (legacy):</strong> If ClassSubjects not provided, comma-separated subjects applied to all classes</Text>
+                  <Text>• <strong>IsClassTeacher:</strong> true or false</Text>
+                </VStack>
+              </Box>
               
               <Input
                 type="file"
@@ -490,7 +500,7 @@ const TeacherManagement: React.FC = () => {
               />
               
               <Text fontSize="xs" color="gray.500">
-                Subjects and Classes should be comma-separated (use standardized format like "Grade 1A, Grade 2B"). IsClassTeacher should be 'true' or 'false'.
+                Use ClassSubjects column to specify which subjects are taught in which classes. This ensures proper class-subject mapping.
               </Text>
             </VStack>
           </Card.Body>

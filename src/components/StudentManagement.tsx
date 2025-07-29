@@ -18,6 +18,25 @@ import { Student } from '../types/student';
 const STANDARDS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
 const DIVISIONS = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
 
+// Helper function to format date string properly
+const formatDateString = (dateStr: string): string => {
+  if (!dateStr) return '';
+  // If it's already in YYYY-MM-DD format, return as is
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return dateStr;
+  }
+  // Otherwise try to parse and format
+  try {
+    const date = new Date(dateStr);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  } catch {
+    return dateStr;
+  }
+};
+
 const StudentManagement: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -107,7 +126,7 @@ const StudentManagement: React.FC = () => {
       name: student.name,
       rollNumber: student.rollNumber,
       studentId: student.studentId,
-      dateOfBirth: student.dateOfBirth,
+      dateOfBirth: formatDateString(student.dateOfBirth),
       standard: student.standard,
       division: student.division,
     });
@@ -220,6 +239,7 @@ const StudentManagement: React.FC = () => {
     setShowUploadForm(false);
   };
 
+
   const renderStudentCard = (student: Student) => (
     <Card.Root key={student.id} p={4} mb={3}>
       <Card.Body>
@@ -232,7 +252,7 @@ const StudentManagement: React.FC = () => {
               Roll No: {student.rollNumber} | Student ID: {student.studentId}
             </Text>
             <Text fontSize="sm" color="gray.600">
-              Class: {student.class} | DOB: {new Date(student.dateOfBirth).toLocaleDateString()}
+              Class: {student.class} | DOB: {formatDateString(student.dateOfBirth)}
             </Text>
           </VStack>
           <HStack gap={2}>
@@ -603,11 +623,13 @@ const StudentManagement: React.FC = () => {
                     <Text fontWeight="medium" mb={2}>Excel File Requirements:</Text>
                     <VStack align="start" gap={1} fontSize="sm" color="gray.600">
                       <Text>• First row should contain headers</Text>
-                      <Text>• Required columns: Name, RollNumber (or Roll Number), StudentId (or Student ID), DateOfBirth (or Date of Birth), Standard, Division</Text>
+                      <Text>• Required columns: Name, RollNumber, StudentId, DateOfBirth, Standard, Division</Text>
+                      <Text>• Optional columns: Age, ParentContact, Notes, ClassId</Text>
                       <Text>• Date format: YYYY-MM-DD or MM/DD/YYYY</Text>
                       <Text>• File formats: .xlsx, .xls</Text>
                     </VStack>
                   </Box>
+
 
                   {/* File Upload */}
                   <Box>
