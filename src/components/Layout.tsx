@@ -23,7 +23,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <Container maxW="7xl">
           <Flex align="center">
             <Heading size="md" color="blue.600">
-              Ican Web Portal
+              e-Vriddhi
             </Heading>
             
             <Spacer />

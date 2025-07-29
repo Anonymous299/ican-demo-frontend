@@ -62,7 +62,7 @@ const Login: React.FC = () => {
       >
         <VStack gap={6}>
           <Heading size="lg" color="blue.600">
-            Ican Web Portal Demo
+            e-Vriddhi
           </Heading>
           
           <Text fontSize="sm" color="gray.600" textAlign="center">
