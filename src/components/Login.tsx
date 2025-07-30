@@ -110,8 +110,7 @@ const Login: React.FC = () => {
             </Box>
             <Heading 
               size="lg" 
-              bgGradient="linear(to-r, green.600, teal.500)"
-              bgClip="text"
+              color="green.700"
               fontWeight="bold"
             >
               e-Vriddhi

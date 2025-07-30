@@ -49,8 +49,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </Box>
               <Heading 
                 size="md" 
-                bgGradient="linear(to-r, green.600, teal.500)"
-                bgClip="text"
+                color="green.700"
                 fontWeight="bold"
               >
                 e-Vriddhi
