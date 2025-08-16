@@ -68,7 +68,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 borderColor="teal.200"
               >
                 <Text fontSize="sm" color="teal.700" fontWeight="medium">
-                  {user?.role === 'admin' ? '👨‍💼 Admin' : '👩‍🏫 Teacher'}
+                  {user?.role === 'admin' ? '👨‍💼 Admin' : 
+                   user?.role === 'teacher' ? '👩‍🏫 Teacher' :
+                   user?.role === 'parent' ? '👪 Parent' :
+                   user?.role === 'student' ? '🎓 Student' : user?.role}
                 </Text>
               </Box>
               <Text fontSize="sm" color="gray.600">
