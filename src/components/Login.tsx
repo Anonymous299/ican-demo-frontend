@@ -23,6 +23,8 @@ const Login: React.FC = () => {
   const demoCredentials = {
     admin: { email: 'admin@gmail.com', password: '12345' },
     teacher: { email: 'teacher@gmail.com', password: '12345' },
+    parent: { email: 'parent@gmail.com', password: '12345' },
+    student: { email: 'student@gmail.com', password: '12345' },
   };
 
   const handleRoleChange = (role: string) => {
@@ -142,6 +144,8 @@ const Login: React.FC = () => {
                 >
                   <option value="admin">👨‍💼 Admin</option>
                   <option value="teacher">👩‍🏫 Teacher</option>
+                  <option value="parent">👪 Parent</option>
+                  <option value="student">🎓 Student</option>
                 </select>
               </Box>
 
@@ -230,6 +234,8 @@ const Login: React.FC = () => {
             <Text fontWeight="bold" color="orange.800" mb={1}>📝 Demo Credentials</Text>
             <Text color="orange.700">Admin: admin@gmail.com / 12345</Text>
             <Text color="orange.700">Teacher: teacher@gmail.com / 12345</Text>
+            <Text color="orange.700">Parent: parent@gmail.com / 12345</Text>
+            <Text color="orange.700">Student: student@gmail.com / 12345</Text>
           </Box>
         </VStack>
       </Box>
