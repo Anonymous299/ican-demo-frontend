@@ -12,11 +12,10 @@ import {
   Flex,
   Spacer,
 } from '@chakra-ui/react';
-import { FaUsers, FaClipboardList, FaChartLine, FaComments, FaFileAlt, FaEye, FaImage, FaCheck, FaFilePdf, FaUpload, FaTimes, FaCalendarCheck, FaQuestionCircle, FaBook } from 'react-icons/fa';
+import { FaUsers, FaChartLine, FaComments, FaFileAlt, FaEye, FaImage, FaCheck, FaFilePdf, FaUpload, FaTimes, FaCalendarCheck, FaQuestionCircle, FaBook } from 'react-icons/fa';
 import axios from 'axios';
 import { API_BASE_URL } from '../config/constants';
 import StudentInteractionForms from './StudentInteractionForms';
-import ActivityCreationForm from './ActivityCreationForm';
 import ClassActivityFeed from './ClassActivityFeed';
 import StudentTimeline from './StudentTimeline';
 import StudentPortfolio from './StudentPortfolio';
@@ -51,7 +50,6 @@ const TeacherDashboard: React.FC = () => {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [loading, setLoading] = useState(false);
   const [activeForm, setActiveForm] = useState<'general' | 'parent' | 'student' | 'peer' | 'observation' | 'assessment' | null>(null);
-  const [showActivityForm, setShowActivityForm] = useState(false);
   const [showActivityFeed, setShowActivityFeed] = useState(false);
   const [showTimeline, setShowTimeline] = useState(false);
   const [showPortfolio, setShowPortfolio] = useState(false);
@@ -503,19 +501,6 @@ const TeacherDashboard: React.FC = () => {
         </Box>
       )}
 
-      {/* Activity Creation Form */}
-      {selectedClass && showActivityForm && (
-        <Box mb={6}>
-          <ActivityCreationForm
-            selectedClass={selectedClass}
-            onClose={() => setShowActivityForm(false)}
-            onSuccess={() => {
-              alert('Activity created successfully!');
-              setShowActivityForm(false);
-            }}
-          />
-        </Box>
-      )}
 
       {/* Class Activity Feed */}
       {selectedClass && showActivityFeed && (
@@ -616,23 +601,6 @@ const TeacherDashboard: React.FC = () => {
 
       {/* Main Feature Cards */}
       <SimpleGrid columns={{ base: 1, md: 3, lg: 6 }} gap={6}>
-        <Box bg="white" p={6} borderRadius="md" boxShadow="sm" textAlign="center">
-          <Box mb={4} display="flex" justifyContent="center">
-            <FaClipboardList size={48} color="#38a169" />
-          </Box>
-          <Heading size="md" mb={2}>Activity Creation</Heading>
-          <Text color="gray.600" mb={4}>
-            Create class-wide activities with domains and competencies
-          </Text>
-          <Button 
-            colorScheme="green" 
-            size="sm" 
-            disabled={!selectedClass}
-            onClick={() => setShowActivityForm(true)}
-          >
-            Create Activity
-          </Button>
-        </Box>
 
         <Box bg="white" p={6} borderRadius="md" boxShadow="sm" textAlign="center">
           <Box mb={4} display="flex" justifyContent="center">

@@ -11,6 +11,7 @@ import {
   Heading,
   SimpleGrid,
   Input,
+  Textarea,
   IconButton,
   createToaster,
 } from '@chakra-ui/react';
@@ -75,7 +76,9 @@ const LessonPlanManagement: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   
   // Modal view states - only one modal open at a time
-  const [modalView, setModalView] = useState<'none' | 'lessons' | 'editLesson'>('none');
+  const [modalView, setModalView] = useState<'none' | 'lessons' | 'editLesson' | 'editActivity'>('none');
+  const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
+  const [editingActivityIndex, setEditingActivityIndex] = useState<number | null>(null);
 
   const toaster = createToaster({
     placement: 'top-right',
@@ -95,6 +98,14 @@ const LessonPlanManagement: React.FC = () => {
     estimatedPeriods: 1,
     learningOutcomes: [''],
     activities: [] as Activity[]
+  });
+
+  const [activityForm, setActivityForm] = useState({
+    name: '',
+    activityType: 'Individual' as Activity['activityType'],
+    gradingType: 'Marks' as Activity['gradingType'],
+    description: '',
+    materials: ['']
   });
 
   const SUBJECTS = ['Mathematics', 'English', 'Science', 'Social Studies', 'Hindi', 'Art & Craft', 'Music', 'Physical Education'];
@@ -408,18 +419,30 @@ const LessonPlanManagement: React.FC = () => {
   };
 
   const addActivity = () => {
-    const newActivity: Activity = {
-      id: Date.now(),
-      name: 'New Activity',
+    // Reset activity form
+    setActivityForm({
+      name: '',
       activityType: 'Individual',
       gradingType: 'Marks',
-      description: 'Activity description',
-      materials: ['Materials needed']
-    };
-    setLessonForm(prev => ({
-      ...prev,
-      activities: [...prev.activities, newActivity]
-    }));
+      description: '',
+      materials: ['']
+    });
+    setEditingActivity(null);
+    setEditingActivityIndex(null);
+    setModalView('editActivity');
+  };
+
+  const editActivity = (activity: Activity, index: number) => {
+    setActivityForm({
+      name: activity.name,
+      activityType: activity.activityType,
+      gradingType: activity.gradingType,
+      description: activity.description,
+      materials: [...activity.materials]
+    });
+    setEditingActivity(activity);
+    setEditingActivityIndex(index);
+    setModalView('editActivity');
   };
 
   const removeActivity = (index: number) => {
@@ -427,6 +450,72 @@ const LessonPlanManagement: React.FC = () => {
       ...prev,
       activities: prev.activities.filter((_, i) => i !== index)
     }));
+  };
+
+  const saveActivity = () => {
+    if (!activityForm.name.trim()) {
+      toaster.create({
+        title: 'Validation Error',
+        description: 'Activity name is required',
+        status: 'error',
+        duration: 3000,
+      });
+      return;
+    }
+
+    const newActivity: Activity = {
+      id: editingActivity?.id || Date.now(),
+      name: activityForm.name.trim(),
+      activityType: activityForm.activityType,
+      gradingType: activityForm.gradingType,
+      description: activityForm.description.trim(),
+      materials: activityForm.materials.filter(m => m.trim()).map(m => m.trim())
+    };
+
+    setLessonForm(prev => {
+      if (editingActivityIndex !== null) {
+        // Editing existing activity
+        return {
+          ...prev,
+          activities: prev.activities.map((activity, index) => 
+            index === editingActivityIndex ? newActivity : activity
+          )
+        };
+      } else {
+        // Adding new activity
+        return {
+          ...prev,
+          activities: [...prev.activities, newActivity]
+        };
+      }
+    });
+
+    setModalView('editLesson');
+    setEditingActivity(null);
+    setEditingActivityIndex(null);
+  };
+
+  const addMaterial = () => {
+    setActivityForm(prev => ({
+      ...prev,
+      materials: [...prev.materials, '']
+    }));
+  };
+
+  const updateMaterial = (index: number, value: string) => {
+    setActivityForm(prev => ({
+      ...prev,
+      materials: prev.materials.map((material, i) => i === index ? value : material)
+    }));
+  };
+
+  const removeMaterial = (index: number) => {
+    if (activityForm.materials.length > 1) {
+      setActivityForm(prev => ({
+        ...prev,
+        materials: prev.materials.filter((_, i) => i !== index)
+      }));
+    }
   };
 
   const getActivityTypeColor = (type: string) => {
@@ -1010,19 +1099,44 @@ const LessonPlanManagement: React.FC = () => {
                     
                     <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
                       {lessonForm.activities.map((activity, index) => (
-                        <Card.Root key={activity.id} p={4} bg="gray.50" borderWidth={1}>
+                        <Card.Root 
+                          key={activity.id} 
+                          p={4} 
+                          bg="gray.50" 
+                          borderWidth={1}
+                          cursor="pointer"
+                          _hover={{ bg: "gray.100", transform: "translateY(-1px)" }}
+                          transition="all 0.2s"
+                          onClick={() => editActivity(activity, index)}
+                        >
                           <Card.Body>
                             <VStack align="start" gap={2}>
                               <HStack justify="space-between" w="100%">
                                 <Text fontWeight="bold" fontSize="sm">{activity.name}</Text>
-                                <IconButton
-                                  size="xs"
-                                  colorScheme="red"
-                                  variant="outline"
-                                  onClick={() => removeActivity(index)}
-                                >
-                                  <FaTrash />
-                                </IconButton>
+                                <HStack gap={1}>
+                                  <IconButton
+                                    size="xs"
+                                    colorScheme="blue"
+                                    variant="outline"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      editActivity(activity, index);
+                                    }}
+                                  >
+                                    <FaEdit />
+                                  </IconButton>
+                                  <IconButton
+                                    size="xs"
+                                    colorScheme="red"
+                                    variant="outline"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeActivity(index);
+                                    }}
+                                  >
+                                    <FaTrash />
+                                  </IconButton>
+                                </HStack>
                               </HStack>
                               <HStack>
                                 <Badge colorScheme={getActivityTypeColor(activity.activityType)} size="sm">
@@ -1064,6 +1178,150 @@ const LessonPlanManagement: React.FC = () => {
                   </Button>
                 </HStack>
               </Card.Footer>
+              </Card.Root>
+            )}
+
+            {modalView === 'editActivity' && (
+              <Card.Root maxW="2xl" w="95%" maxH="90vh" overflowY="auto">
+                <Card.Header>
+                  <HStack justify="space-between">
+                    <HStack>
+                      <IconButton
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setModalView('editLesson')}
+                      >
+                        <FaArrowLeft />
+                      </IconButton>
+                      <Heading size="lg">
+                        {editingActivity ? '✏️ Edit Activity' : '➕ Add New Activity'}
+                      </Heading>
+                    </HStack>
+                    <IconButton
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setModalView('editLesson')}
+                    >
+                      <FaTimes />
+                    </IconButton>
+                  </HStack>
+                </Card.Header>
+
+                <Card.Body>
+                  <VStack gap={6} align="stretch">
+                    <Box>
+                      <Text mb={2} fontWeight="medium">Activity Name *</Text>
+                      <Input
+                        value={activityForm.name}
+                        onChange={(e) => setActivityForm(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="e.g., Counting Bears Activity"
+                      />
+                    </Box>
+
+                    <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
+                      <Box>
+                        <Text mb={2} fontWeight="medium">Activity Type *</Text>
+                        <HStack gap={2}>
+                          {(['Individual', 'Group', 'Homework'] as const).map((type) => (
+                            <Button
+                              key={type}
+                              size="sm"
+                              variant="outline"
+                              colorScheme="blue"
+                              bg={activityForm.activityType === type ? 'blue.500' : 'transparent'}
+                              color={activityForm.activityType === type ? 'white' : 'blue.500'}
+                              onClick={() => setActivityForm(prev => ({ ...prev, activityType: type }))}
+                            >
+                              {type}
+                            </Button>
+                          ))}
+                        </HStack>
+                      </Box>
+
+                      <Box>
+                        <Text mb={2} fontWeight="medium">Grading Type *</Text>
+                        <HStack gap={2}>
+                          {(['Marks', 'Rubric'] as const).map((type) => (
+                            <Button
+                              key={type}
+                              size="sm"
+                              variant="outline"
+                              colorScheme="green"
+                              bg={activityForm.gradingType === type ? 'green.500' : 'transparent'}
+                              color={activityForm.gradingType === type ? 'white' : 'green.500'}
+                              onClick={() => setActivityForm(prev => ({ ...prev, gradingType: type }))}
+                            >
+                              {type}
+                            </Button>
+                          ))}
+                        </HStack>
+                      </Box>
+                    </SimpleGrid>
+
+                    <Box>
+                      <Text mb={2} fontWeight="medium">Description</Text>
+                      <Textarea
+                        value={activityForm.description}
+                        onChange={(e) => setActivityForm(prev => ({ ...prev, description: e.target.value }))}
+                        placeholder="Describe the activity and its objectives..."
+                        rows={4}
+                      />
+                    </Box>
+
+                    <Box>
+                      <Text mb={2} fontWeight="medium">Materials Needed</Text>
+                      <VStack gap={2} align="stretch">
+                        {activityForm.materials.map((material, index) => (
+                          <HStack key={index}>
+                            <Input
+                              value={material}
+                              onChange={(e) => updateMaterial(index, e.target.value)}
+                              placeholder="Enter material needed"
+                            />
+                            {activityForm.materials.length > 1 && (
+                              <IconButton
+                                size="sm"
+                                colorScheme="red"
+                                variant="outline"
+                                onClick={() => removeMaterial(index)}
+                              >
+                                <FaTrash />
+                              </IconButton>
+                            )}
+                          </HStack>
+                        ))}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={addMaterial}
+                          alignSelf="start"
+                        >
+                          <FaPlus />
+                          Add Material
+                        </Button>
+                      </VStack>
+                    </Box>
+                  </VStack>
+                </Card.Body>
+
+                <Card.Footer>
+                  <HStack gap={3} w="100%" justify="end">
+                    <Button
+                      variant="outline"
+                      onClick={() => setModalView('editLesson')}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      colorScheme="green"
+                      onClick={saveActivity}
+                      disabled={!activityForm.name.trim()}
+                    >
+                      <FaSave />
+                      {editingActivity ? 'Update Activity' : 'Add Activity'}
+                    </Button>
+                  </HStack>
+                </Card.Footer>
               </Card.Root>
             )}
           </Box>
