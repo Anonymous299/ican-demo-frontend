@@ -7,13 +7,14 @@ import {
   Button,
   HStack,
 } from '@chakra-ui/react';
-import { FaUsers, FaCogs, FaFileAlt, FaArrowLeft, FaGraduationCap } from 'react-icons/fa';
+import { FaUsers, FaCogs, FaFileAlt, FaArrowLeft, FaGraduationCap, FaSchool } from 'react-icons/fa';
 import TeacherManagement from './TeacherManagement';
 import CompetencyManagement from './CompetencyManagement';
 import TemplateManagement from './TemplateManagement';
 import StudentManagement from './StudentManagement';
+import ClassManagement from './ClassManagement';
 
-type AdminView = 'dashboard' | 'teachers' | 'competencies' | 'templates' | 'students';
+type AdminView = 'dashboard' | 'teachers' | 'competencies' | 'templates' | 'students' | 'classes';
 
 const AdminDashboard: React.FC = () => {
   const [currentView, setCurrentView] = useState<AdminView>('dashboard');
@@ -28,6 +29,8 @@ const AdminDashboard: React.FC = () => {
         return <TemplateManagement />;
       case 'students':
         return <StudentManagement />;
+      case 'classes':
+        return <ClassManagement />;
       default:
         return renderDashboard();
     }
@@ -39,7 +42,7 @@ const AdminDashboard: React.FC = () => {
         Admin Dashboard
       </Heading>
       
-      <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} gap={6}>
+      <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap={6}>
         <Box 
           bg="white" 
           p={6} 
@@ -117,6 +120,26 @@ const AdminDashboard: React.FC = () => {
           <Heading size="md" mb={2}>Student Management</Heading>
           <Text color="gray.600">
             Add students manually or upload from Excel files
+          </Text>
+        </Box>
+
+        <Box 
+          bg="white" 
+          p={6} 
+          borderRadius="md" 
+          boxShadow="sm" 
+          textAlign="center" 
+          cursor="pointer"
+          _hover={{ transform: 'translateY(-2px)', boxShadow: 'md' }}
+          transition="all 0.2s"
+          onClick={() => setCurrentView('classes')}
+        >
+          <Box mb={4} display="flex" justifyContent="center">
+            <FaSchool size={48} color="#f6ad55" />
+          </Box>
+          <Heading size="md" mb={2}>Class Management</Heading>
+          <Text color="gray.600">
+            Create and manage classes, assign teachers, track enrollment
           </Text>
         </Box>
       </SimpleGrid>
