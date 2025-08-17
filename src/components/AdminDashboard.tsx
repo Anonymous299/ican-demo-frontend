@@ -7,14 +7,15 @@ import {
   Button,
   HStack,
 } from '@chakra-ui/react';
-import { FaUsers, FaCogs, FaFileAlt, FaArrowLeft, FaGraduationCap, FaSchool } from 'react-icons/fa';
+import { FaUsers, FaCogs, FaFileAlt, FaArrowLeft, FaGraduationCap, FaSchool, FaBook } from 'react-icons/fa';
 import TeacherManagement from './TeacherManagement';
 import CompetencyManagement from './CompetencyManagement';
 import TemplateManagement from './TemplateManagement';
 import StudentManagement from './StudentManagement';
 import ClassManagement from './ClassManagement';
+import LessonPlanManagement from './LessonPlanManagement';
 
-type AdminView = 'dashboard' | 'teachers' | 'competencies' | 'templates' | 'students' | 'classes';
+type AdminView = 'dashboard' | 'teachers' | 'competencies' | 'templates' | 'students' | 'classes' | 'curriculum';
 
 const AdminDashboard: React.FC = () => {
   const [currentView, setCurrentView] = useState<AdminView>('dashboard');
@@ -31,6 +32,8 @@ const AdminDashboard: React.FC = () => {
         return <StudentManagement />;
       case 'classes':
         return <ClassManagement />;
+      case 'curriculum':
+        return <LessonPlanManagement />;
       default:
         return renderDashboard();
     }
@@ -140,6 +143,26 @@ const AdminDashboard: React.FC = () => {
           <Heading size="md" mb={2}>Class Management</Heading>
           <Text color="gray.600">
             Create and manage classes, assign teachers, track enrollment
+          </Text>
+        </Box>
+
+        <Box 
+          bg="white" 
+          p={6} 
+          borderRadius="md" 
+          boxShadow="sm" 
+          textAlign="center" 
+          cursor="pointer"
+          _hover={{ transform: 'translateY(-2px)', boxShadow: 'md' }}
+          transition="all 0.2s"
+          onClick={() => setCurrentView('curriculum')}
+        >
+          <Box mb={4} display="flex" justifyContent="center">
+            <FaBook size={48} color="#9f7aea" />
+          </Box>
+          <Heading size="md" mb={2}>Curriculum Planning</Heading>
+          <Text color="gray.600">
+            Design curriculum plans, manage units, objectives and assessments
           </Text>
         </Box>
       </SimpleGrid>
