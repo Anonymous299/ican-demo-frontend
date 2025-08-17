@@ -7,7 +7,7 @@ import {
   Button,
   HStack,
 } from '@chakra-ui/react';
-import { FaUsers, FaCogs, FaFileAlt, FaArrowLeft, FaGraduationCap, FaSchool, FaBook, FaClipboardList } from 'react-icons/fa';
+import { FaUsers, FaCogs, FaFileAlt, FaArrowLeft, FaGraduationCap, FaSchool, FaBook, FaClipboardList, FaQuestionCircle } from 'react-icons/fa';
 import TeacherManagement from './TeacherManagement';
 import CompetencyManagement from './CompetencyManagement';
 import TemplateManagement from './TemplateManagement';
@@ -15,8 +15,9 @@ import StudentManagement from './StudentManagement';
 import ClassManagement from './ClassManagement';
 import LessonPlanManagement from './LessonPlanManagement';
 import QuickAttendance from './QuickAttendance';
+import TestManagement from './TestManagement';
 
-type AdminView = 'dashboard' | 'teachers' | 'competencies' | 'templates' | 'students' | 'classes' | 'curriculum' | 'attendance';
+type AdminView = 'dashboard' | 'teachers' | 'competencies' | 'templates' | 'students' | 'classes' | 'curriculum' | 'attendance' | 'tests';
 
 const AdminDashboard: React.FC = () => {
   const [currentView, setCurrentView] = useState<AdminView>('dashboard');
@@ -37,6 +38,8 @@ const AdminDashboard: React.FC = () => {
         return <LessonPlanManagement />;
       case 'attendance':
         return <QuickAttendance onBack={() => setCurrentView('dashboard')} />;
+      case 'tests':
+        return <TestManagement />;
       default:
         return renderDashboard();
     }
@@ -186,6 +189,26 @@ const AdminDashboard: React.FC = () => {
           <Heading size="md" mb={2}>Attendance Management</Heading>
           <Text color="gray.600">
             Track student attendance, mark daily records and generate reports
+          </Text>
+        </Box>
+
+        <Box 
+          bg="white" 
+          p={6} 
+          borderRadius="md" 
+          boxShadow="sm" 
+          textAlign="center" 
+          cursor="pointer"
+          _hover={{ transform: 'translateY(-2px)', boxShadow: 'md' }}
+          transition="all 0.2s"
+          onClick={() => setCurrentView('tests')}
+        >
+          <Box mb={4} display="flex" justifyContent="center">
+            <FaQuestionCircle size={48} color="#ed8936" />
+          </Box>
+          <Heading size="md" mb={2}>Test Management</Heading>
+          <Text color="gray.600">
+            Create and manage quizzes, tests, and assessments for students
           </Text>
         </Box>
       </SimpleGrid>
