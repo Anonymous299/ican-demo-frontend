@@ -7,6 +7,7 @@ import Layout from './components/Layout';
 import AdminDashboard from './components/AdminDashboard';
 import TeacherDashboard from './components/TeacherDashboard';
 import StudentDashboard from './components/StudentDashboard';
+import ParentDashboard from './components/ParentDashboard';
 
 const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
@@ -72,10 +73,7 @@ const AppContent: React.FC = () => {
           path="/parent" 
           element={
             user.role === 'parent' ? 
-            <Box textAlign="center" py={8}>
-              <h2>Parent Portal - Coming Soon!</h2>
-              <p>Parent dashboard will be available soon.</p>
-            </Box> : 
+            <ParentDashboard /> : 
             <Navigate to={getDefaultRoute()} replace />
           } 
         />
