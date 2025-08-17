@@ -12,7 +12,7 @@ import {
   Flex,
   Spacer,
 } from '@chakra-ui/react';
-import { FaUsers, FaClipboardList, FaChartLine, FaComments, FaFileAlt, FaEye, FaImage, FaCheck, FaFilePdf, FaUpload, FaTimes, FaCalendarCheck } from 'react-icons/fa';
+import { FaUsers, FaClipboardList, FaChartLine, FaComments, FaFileAlt, FaEye, FaImage, FaCheck, FaFilePdf, FaUpload, FaTimes, FaCalendarCheck, FaQuestionCircle } from 'react-icons/fa';
 import axios from 'axios';
 import { API_BASE_URL } from '../config/constants';
 import StudentInteractionForms from './StudentInteractionForms';
@@ -21,6 +21,7 @@ import ClassActivityFeed from './ClassActivityFeed';
 import StudentTimeline from './StudentTimeline';
 import StudentPortfolio from './StudentPortfolio';
 import QuickAttendance from './QuickAttendance';
+import TestManagement from './TestManagement';
 
 interface Class {
   id: number;
@@ -54,6 +55,7 @@ const TeacherDashboard: React.FC = () => {
   const [showTimeline, setShowTimeline] = useState(false);
   const [showPortfolio, setShowPortfolio] = useState(false);
   const [showAttendance, setShowAttendance] = useState(false);
+  const [showTests, setShowTests] = useState(false);
   const [selectedTerm, setSelectedTerm] = useState<'term1' | 'term2'>('term1');
   const [showPdfUpload, setShowPdfUpload] = useState(false);
   const [demoPdfStatus, setDemoPdfStatus] = useState({ available: false, size: 0 });
@@ -198,8 +200,24 @@ const TeacherDashboard: React.FC = () => {
         <QuickAttendance onBack={() => setShowAttendance(false)} />
       )}
 
+      {/* Test Management - Full Page */}
+      {showTests && (
+        <Box>
+          <HStack mb={4}>
+            <Button
+              variant="outline"
+              onClick={() => setShowTests(false)}
+            >
+              <FaTimes />
+              Back to Dashboard
+            </Button>
+          </HStack>
+          <TestManagement />
+        </Box>
+      )}
+
       {/* Main Dashboard Content */}
-      {!showAttendance && (
+      {!showAttendance && !showTests && (
         <>
           <Heading mb={6} color="blue.600">
             Teacher Dashboard
@@ -579,7 +597,7 @@ const TeacherDashboard: React.FC = () => {
       )}
 
       {/* Main Feature Cards */}
-      <SimpleGrid columns={{ base: 1, md: 5 }} gap={6}>
+      <SimpleGrid columns={{ base: 1, md: 3, lg: 6 }} gap={6}>
         <Box bg="white" p={6} borderRadius="md" boxShadow="sm" textAlign="center">
           <Box mb={4} display="flex" justifyContent="center">
             <FaClipboardList size={48} color="#38a169" />
@@ -666,6 +684,23 @@ const TeacherDashboard: React.FC = () => {
             onClick={() => setShowAttendance(true)}
           >
             Manage Attendance
+          </Button>
+        </Box>
+
+        <Box bg="white" p={6} borderRadius="md" boxShadow="sm" textAlign="center">
+          <Box mb={4} display="flex" justifyContent="center">
+            <FaQuestionCircle size={48} color="#ed8936" />
+          </Box>
+          <Heading size="md" mb={2}>Test Management</Heading>
+          <Text color="gray.600" mb={4}>
+            Create and manage quizzes, tests, and assessments
+          </Text>
+          <Button 
+            colorScheme="orange" 
+            size="sm" 
+            onClick={() => setShowTests(true)}
+          >
+            Manage Tests
           </Button>
         </Box>
       </SimpleGrid>
