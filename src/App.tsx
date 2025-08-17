@@ -6,6 +6,7 @@ import Login from './components/Login';
 import Layout from './components/Layout';
 import AdminDashboard from './components/AdminDashboard';
 import TeacherDashboard from './components/TeacherDashboard';
+import StudentDashboard from './components/StudentDashboard';
 
 const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
@@ -26,23 +27,29 @@ const AppContent: React.FC = () => {
     );
   }
 
+  const getDefaultRoute = () => {
+    switch (user.role) {
+      case 'admin': return '/admin';
+      case 'teacher': return '/teacher';
+      case 'student': return '/student';
+      case 'parent': return '/parent';
+      default: return '/admin';
+    }
+  };
+
   return (
     <Layout>
       <Routes>
         <Route 
           path="/" 
-          element={
-            user.role === 'admin' ? 
-            <Navigate to="/admin" replace /> : 
-            <Navigate to="/teacher" replace />
-          } 
+          element={<Navigate to={getDefaultRoute()} replace />} 
         />
         <Route 
           path="/admin" 
           element={
             user.role === 'admin' ? 
             <AdminDashboard /> : 
-            <Navigate to="/teacher" replace />
+            <Navigate to={getDefaultRoute()} replace />
           } 
         />
         <Route 
@@ -50,10 +57,29 @@ const AppContent: React.FC = () => {
           element={
             user.role === 'teacher' ? 
             <TeacherDashboard /> : 
-            <Navigate to="/admin" replace />
+            <Navigate to={getDefaultRoute()} replace />
           } 
         />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route 
+          path="/student" 
+          element={
+            user.role === 'student' ? 
+            <StudentDashboard /> : 
+            <Navigate to={getDefaultRoute()} replace />
+          } 
+        />
+        <Route 
+          path="/parent" 
+          element={
+            user.role === 'parent' ? 
+            <Box textAlign="center" py={8}>
+              <h2>Parent Portal - Coming Soon!</h2>
+              <p>Parent dashboard will be available soon.</p>
+            </Box> : 
+            <Navigate to={getDefaultRoute()} replace />
+          } 
+        />
+        <Route path="*" element={<Navigate to={getDefaultRoute()} replace />} />
       </Routes>
     </Layout>
   );

@@ -5,7 +5,11 @@ import { API_BASE_URL } from '../config/constants';
 interface User {
   id: number;
   email: string;
-  role: 'admin' | 'teacher';
+  role: 'admin' | 'teacher' | 'student' | 'parent';
+  studentId?: number;
+  studentIds?: number[];
+  children?: any[];
+  studentData?: any;
 }
 
 interface AuthContextType {
@@ -35,15 +39,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+    
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
+      // If we have a stored user, use it immediately for better UX
+      if (storedUser) {
+        try {
+          const user = JSON.parse(storedUser);
+          setUser(user);
+        } catch (error) {
+          console.error('Error parsing stored user:', error);
+          localStorage.removeItem('user');
+        }
+      }
+      
+      // Always verify with the server
       axios.get(`${API_BASE_URL}/api/auth/me`)
         .then(response => {
           setUser(response.data);
+          localStorage.setItem('user', JSON.stringify(response.data));
         })
         .catch(() => {
           localStorage.removeItem('token');
+          localStorage.removeItem('user');
           delete axios.defaults.headers.common['Authorization'];
+          setUser(null);
         })
         .finally(() => {
           setLoading(false);
@@ -62,6 +84,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       const { token, user } = response.data;
       localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(user);
     } catch (error) {
@@ -71,6 +94,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     delete axios.defaults.headers.common['Authorization'];
     setUser(null);
   };
