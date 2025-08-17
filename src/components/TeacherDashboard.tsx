@@ -12,7 +12,7 @@ import {
   Flex,
   Spacer,
 } from '@chakra-ui/react';
-import { FaUsers, FaClipboardList, FaChartLine, FaComments, FaFileAlt, FaEye, FaImage, FaCheck, FaFilePdf, FaUpload, FaTimes, FaCalendarCheck, FaQuestionCircle } from 'react-icons/fa';
+import { FaUsers, FaClipboardList, FaChartLine, FaComments, FaFileAlt, FaEye, FaImage, FaCheck, FaFilePdf, FaUpload, FaTimes, FaCalendarCheck, FaQuestionCircle, FaBook } from 'react-icons/fa';
 import axios from 'axios';
 import { API_BASE_URL } from '../config/constants';
 import StudentInteractionForms from './StudentInteractionForms';
@@ -22,6 +22,7 @@ import StudentTimeline from './StudentTimeline';
 import StudentPortfolio from './StudentPortfolio';
 import QuickAttendance from './QuickAttendance';
 import TestManagement from './TestManagement';
+import LessonPlanManagement from './LessonPlanManagement';
 
 interface Class {
   id: number;
@@ -56,6 +57,7 @@ const TeacherDashboard: React.FC = () => {
   const [showPortfolio, setShowPortfolio] = useState(false);
   const [showAttendance, setShowAttendance] = useState(false);
   const [showTests, setShowTests] = useState(false);
+  const [showLessonPlans, setShowLessonPlans] = useState(false);
   const [selectedTerm, setSelectedTerm] = useState<'term1' | 'term2'>('term1');
   const [showPdfUpload, setShowPdfUpload] = useState(false);
   const [demoPdfStatus, setDemoPdfStatus] = useState({ available: false, size: 0 });
@@ -216,8 +218,24 @@ const TeacherDashboard: React.FC = () => {
         </Box>
       )}
 
+      {/* Lesson Plan Management - Full Page */}
+      {showLessonPlans && (
+        <Box>
+          <HStack mb={4}>
+            <Button
+              variant="outline"
+              onClick={() => setShowLessonPlans(false)}
+            >
+              <FaTimes />
+              Back to Dashboard
+            </Button>
+          </HStack>
+          <LessonPlanManagement />
+        </Box>
+      )}
+
       {/* Main Dashboard Content */}
-      {!showAttendance && !showTests && (
+      {!showAttendance && !showTests && !showLessonPlans && (
         <>
           <Heading mb={6} color="blue.600">
             Teacher Dashboard
@@ -701,6 +719,23 @@ const TeacherDashboard: React.FC = () => {
             onClick={() => setShowTests(true)}
           >
             Manage Tests
+          </Button>
+        </Box>
+
+        <Box bg="white" p={6} borderRadius="md" boxShadow="sm" textAlign="center">
+          <Box mb={4} display="flex" justifyContent="center">
+            <FaBook size={48} color="#9f7aea" />
+          </Box>
+          <Heading size="md" mb={2}>Lesson Plans</Heading>
+          <Text color="gray.600" mb={4}>
+            View and customize your assigned lesson plans
+          </Text>
+          <Button 
+            colorScheme="purple" 
+            size="sm" 
+            onClick={() => setShowLessonPlans(true)}
+          >
+            Manage Lesson Plans
           </Button>
         </Box>
       </SimpleGrid>
