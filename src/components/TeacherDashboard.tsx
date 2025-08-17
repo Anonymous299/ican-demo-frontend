@@ -12,7 +12,7 @@ import {
   Flex,
   Spacer,
 } from '@chakra-ui/react';
-import { FaUsers, FaClipboardList, FaChartLine, FaComments, FaFileAlt, FaEye, FaImage, FaCheck, FaFilePdf, FaUpload, FaTimes } from 'react-icons/fa';
+import { FaUsers, FaClipboardList, FaChartLine, FaComments, FaFileAlt, FaEye, FaImage, FaCheck, FaFilePdf, FaUpload, FaTimes, FaCalendarCheck } from 'react-icons/fa';
 import axios from 'axios';
 import { API_BASE_URL } from '../config/constants';
 import StudentInteractionForms from './StudentInteractionForms';
@@ -20,6 +20,7 @@ import ActivityCreationForm from './ActivityCreationForm';
 import ClassActivityFeed from './ClassActivityFeed';
 import StudentTimeline from './StudentTimeline';
 import StudentPortfolio from './StudentPortfolio';
+import QuickAttendance from './QuickAttendance';
 
 interface Class {
   id: number;
@@ -52,6 +53,7 @@ const TeacherDashboard: React.FC = () => {
   const [showActivityFeed, setShowActivityFeed] = useState(false);
   const [showTimeline, setShowTimeline] = useState(false);
   const [showPortfolio, setShowPortfolio] = useState(false);
+  const [showAttendance, setShowAttendance] = useState(false);
   const [selectedTerm, setSelectedTerm] = useState<'term1' | 'term2'>('term1');
   const [showPdfUpload, setShowPdfUpload] = useState(false);
   const [demoPdfStatus, setDemoPdfStatus] = useState({ available: false, size: 0 });
@@ -191,9 +193,17 @@ const TeacherDashboard: React.FC = () => {
 
   return (
     <Box>
-      <Heading mb={6} color="blue.600">
-        Teacher Dashboard
-      </Heading>
+      {/* Quick Attendance - Full Page */}
+      {showAttendance && (
+        <QuickAttendance onBack={() => setShowAttendance(false)} />
+      )}
+
+      {/* Main Dashboard Content */}
+      {!showAttendance && (
+        <>
+          <Heading mb={6} color="blue.600">
+            Teacher Dashboard
+          </Heading>
 
       {/* Demo PDF Upload Section */}
       <Card.Root mb={6}>
@@ -569,7 +579,7 @@ const TeacherDashboard: React.FC = () => {
       )}
 
       {/* Main Feature Cards */}
-      <SimpleGrid columns={{ base: 1, md: 4 }} gap={6}>
+      <SimpleGrid columns={{ base: 1, md: 5 }} gap={6}>
         <Box bg="white" p={6} borderRadius="md" boxShadow="sm" textAlign="center">
           <Box mb={4} display="flex" justifyContent="center">
             <FaClipboardList size={48} color="#38a169" />
@@ -641,7 +651,26 @@ const TeacherDashboard: React.FC = () => {
             Manage Portfolio
           </Button>
         </Box>
+
+        <Box bg="white" p={6} borderRadius="md" boxShadow="sm" textAlign="center">
+          <Box mb={4} display="flex" justifyContent="center">
+            <FaCalendarCheck size={48} color="#4299e1" />
+          </Box>
+          <Heading size="md" mb={2}>Attendance</Heading>
+          <Text color="gray.600" mb={4}>
+            Mark and track student attendance records
+          </Text>
+          <Button 
+            colorScheme="blue" 
+            size="sm" 
+            onClick={() => setShowAttendance(true)}
+          >
+            Manage Attendance
+          </Button>
+        </Box>
       </SimpleGrid>
+        </>
+      )}
     </Box>
   );
 };

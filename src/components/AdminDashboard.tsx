@@ -7,15 +7,16 @@ import {
   Button,
   HStack,
 } from '@chakra-ui/react';
-import { FaUsers, FaCogs, FaFileAlt, FaArrowLeft, FaGraduationCap, FaSchool, FaBook } from 'react-icons/fa';
+import { FaUsers, FaCogs, FaFileAlt, FaArrowLeft, FaGraduationCap, FaSchool, FaBook, FaClipboardList } from 'react-icons/fa';
 import TeacherManagement from './TeacherManagement';
 import CompetencyManagement from './CompetencyManagement';
 import TemplateManagement from './TemplateManagement';
 import StudentManagement from './StudentManagement';
 import ClassManagement from './ClassManagement';
 import LessonPlanManagement from './LessonPlanManagement';
+import QuickAttendance from './QuickAttendance';
 
-type AdminView = 'dashboard' | 'teachers' | 'competencies' | 'templates' | 'students' | 'classes' | 'curriculum';
+type AdminView = 'dashboard' | 'teachers' | 'competencies' | 'templates' | 'students' | 'classes' | 'curriculum' | 'attendance';
 
 const AdminDashboard: React.FC = () => {
   const [currentView, setCurrentView] = useState<AdminView>('dashboard');
@@ -34,6 +35,8 @@ const AdminDashboard: React.FC = () => {
         return <ClassManagement />;
       case 'curriculum':
         return <LessonPlanManagement />;
+      case 'attendance':
+        return <QuickAttendance onBack={() => setCurrentView('dashboard')} />;
       default:
         return renderDashboard();
     }
@@ -163,6 +166,26 @@ const AdminDashboard: React.FC = () => {
           <Heading size="md" mb={2}>Curriculum Planning</Heading>
           <Text color="gray.600">
             Design curriculum plans, manage units, objectives and assessments
+          </Text>
+        </Box>
+
+        <Box 
+          bg="white" 
+          p={6} 
+          borderRadius="md" 
+          boxShadow="sm" 
+          textAlign="center" 
+          cursor="pointer"
+          _hover={{ transform: 'translateY(-2px)', boxShadow: 'md' }}
+          transition="all 0.2s"
+          onClick={() => setCurrentView('attendance')}
+        >
+          <Box mb={4} display="flex" justifyContent="center">
+            <FaClipboardList size={48} color="#4299e1" />
+          </Box>
+          <Heading size="md" mb={2}>Attendance Management</Heading>
+          <Text color="gray.600">
+            Track student attendance, mark daily records and generate reports
           </Text>
         </Box>
       </SimpleGrid>
