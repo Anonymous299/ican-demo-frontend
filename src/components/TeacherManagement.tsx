@@ -576,7 +576,7 @@ const TeacherManagement: React.FC = () => {
                 <Table.Cell>{teacher.phone}</Table.Cell>
                 <Table.Cell>
                   <VStack align="start" gap={2}>
-                    {teacher.classes.map((className) => (
+                    {teacher.classes && teacher.classes.map((className) => (
                       <Box key={className}>
                         <Badge colorScheme="teal" size="sm" mb={1} variant="solid">
                           {className}
@@ -593,7 +593,7 @@ const TeacherManagement: React.FC = () => {
                         {/* Fallback: show all subjects if classSubjects not available */}
                         {(!teacher.classSubjects || !teacher.classSubjects[className]) && (
                           <HStack flexWrap="wrap" gap={1} mt={1}>
-                            {teacher.subjects.map((subject) => (
+                            {teacher.subjects && teacher.subjects.map((subject) => (
                               <Badge key={subject} colorScheme="purple" size="xs" variant="subtle">
                                 {subject}
                               </Badge>
